@@ -2,6 +2,7 @@
 
 import {
   ChevronsUpDownIcon,
+  CircleCheckIcon,
   LayoutDashboardIcon,
   PlusIcon,
   UsersIcon,
@@ -10,6 +11,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { CommandMenu } from "@/components/command-menu";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +44,16 @@ export function AppSidebar({
   const base = `/w/${workspace.slug}`;
   const nav = [
     { href: base, label: "Dashboard", icon: LayoutDashboardIcon },
+    // Viewers can't be assigned tasks, so they have no My Tasks page.
+    ...(workspace.role === "viewer"
+      ? []
+      : [
+          {
+            href: `${base}/my-tasks`,
+            label: "My Tasks",
+            icon: CircleCheckIcon,
+          },
+        ]),
     { href: `${base}/settings/members`, label: "Members", icon: UsersIcon },
   ];
 
@@ -88,6 +100,8 @@ export function AppSidebar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CommandMenu workspace={workspace} />
 
       <nav aria-label="Workspace" className="flex gap-1 md:flex-col">
         {nav.map(({ href, label, icon: Icon }) => {

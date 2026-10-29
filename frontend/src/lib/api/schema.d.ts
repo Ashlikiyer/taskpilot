@@ -371,6 +371,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws_id}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_v1_workspaces__ws_id__search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws_id}/my-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Tasks */
+        get: operations["my_tasks_api_v1_workspaces__ws_id__my_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -517,6 +551,27 @@ export interface components {
              */
             role: "admin" | "member" | "viewer";
         };
+        /**
+         * MyTasks
+         * @description Open tasks assigned to the current user, grouped by due date in their timezone.
+         */
+        MyTasks: {
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /** Overdue */
+            overdue: components["schemas"]["TaskOut"][];
+            /** Due Today */
+            due_today: components["schemas"]["TaskOut"][];
+            /** This Week */
+            this_week: components["schemas"]["TaskOut"][];
+            /** Later */
+            later: components["schemas"]["TaskOut"][];
+            /** No Date */
+            no_date: components["schemas"]["TaskOut"][];
+        };
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -587,6 +642,13 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** SearchResults */
+        SearchResults: {
+            /** Tasks */
+            tasks: components["schemas"]["TaskOut"][];
+            /** Projects */
+            projects: components["schemas"]["ProjectOut"][];
         };
         /** TaskCreate */
         TaskCreate: {
@@ -1479,6 +1541,8 @@ export interface operations {
                 due_to?: string | null;
                 /** @description List this task's subtasks instead of top-level tasks */
                 parent_id?: string | null;
+                /** @description Search title and description */
+                q?: string | null;
                 /** @description Field, prefix with - for desc */
                 sort?: string;
                 page?: number;
@@ -1761,6 +1825,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LabelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_api_v1_workspaces__ws_id__search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_tasks_api_v1_workspaces__ws_id__my_tasks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTasks"];
                 };
             };
             /** @description Validation Error */

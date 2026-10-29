@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { EmptyState, ErrorState } from "@/components/states";
+import { TaskDrawer } from "@/components/tasks/task-drawer";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
@@ -51,6 +52,7 @@ export default function WorkspaceLayout({
     <div className="flex flex-1 flex-col md:flex-row">
       <AppSidebar workspace={workspace} workspaces={data} />
       <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+      <TaskDrawer workspace={workspace} />
     </div>
   );
 }

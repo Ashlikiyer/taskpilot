@@ -116,19 +116,21 @@ function mockApi() {
       ]);
     }
     if (url.endsWith("/members")) return json([]);
+    if (url.endsWith("/projects/p1")) return json(project);
     if (url.endsWith("/labels")) return json([]);
     return json({ error: { code: "NOT_FOUND", message: url } }, 404);
   });
   return patches;
 }
 
-function renderDrawer(canEdit: boolean) {
+/** Owners can edit; viewers get the read-only drawer. */
+function renderDrawer(role: "owner" | "viewer") {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <TaskDrawer workspace={workspace} project={project} canEdit={canEdit} />
+      <TaskDrawer workspace={{ ...workspace, role }} />
     </QueryClientProvider>,
   );
 }
@@ -138,7 +140,7 @@ describe("TaskDrawer", () => {
 
   it("shows subtask progress and the activity history", async () => {
     mockApi();
-    renderDrawer(true);
+    renderDrawer("owner");
 
     expect(await screen.findByText("1/2 done")).toBeInTheDocument();
     expect(
@@ -149,7 +151,7 @@ describe("TaskDrawer", () => {
 
   it("ticking a subtask marks it done", async () => {
     const patches = mockApi();
-    renderDrawer(true);
+    renderDrawer("owner");
 
     fireEvent.click(
       await screen.findByRole("checkbox", { name: "Test forms" }),
@@ -164,7 +166,7 @@ describe("TaskDrawer", () => {
 
   it("is read-only for people who can't edit", async () => {
     mockApi();
-    renderDrawer(false);
+    renderDrawer("viewer");
 
     expect(
       await screen.findByRole("dialog", { name: "Launch site" }),

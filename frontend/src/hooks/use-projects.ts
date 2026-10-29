@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 
 import { api, type Schemas } from "@/lib/api/client";
 
@@ -71,4 +72,10 @@ export function useSetProjectArchived(projectId: string) {
       ),
     onSuccess: sync,
   });
+}
+
+/** The project for the `[projectId]` in the current URL. */
+export function useCurrentProject() {
+  const { projectId } = useParams<{ projectId: string }>();
+  return useProject(projectId);
 }

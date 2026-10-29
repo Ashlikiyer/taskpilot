@@ -44,6 +44,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useMe } from "@/hooks/use-auth";
+import { useProject } from "@/hooks/use-projects";
 import { useTaskParam } from "@/hooks/use-task-param";
 import {
   useCreateLabel,
@@ -59,6 +60,7 @@ import { ApiError, errorMessage, type Schemas } from "@/lib/api/client";
 import {
   assignableMembers,
   canDeleteTask,
+  canEditTasks,
   describeActivity,
   PRIORITIES,
   PRIORITY_LABEL,
@@ -74,18 +76,18 @@ type Project = Schemas["ProjectOut"];
 
 const UNASSIGNED = "unassigned";
 
-export function TaskDrawer({
-  workspace,
-  project,
-  canEdit,
-}: {
-  workspace: Workspace;
-  project: Project;
-  canEdit: boolean;
-}) {
+/**
+ * Opens for `?task=<id>` on any workspace page. It loads the task's own project,
+ * so it works from the board, the list, My Tasks or a search result.
+ */
+export function TaskDrawer({ workspace }: { workspace: Workspace }) {
   const [taskId, setTaskId] = useTaskParam();
   const task = useTask(taskId);
-  const notFound = task.error instanceof ApiError && task.error.status === 404;
+  const project = useProject(task.data?.project_id);
+  const me = useMe();
+  const notFound =
+    (task.error instanceof ApiError && task.error.status === 404) ||
+    (project.data !== undefined && project.data.workspace_id !== workspace.id);
 
   return (
     <Sheet
@@ -93,13 +95,13 @@ export function TaskDrawer({
       onOpenChange={(open) => !open && setTaskId(null)}
     >
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
-        {task.data ? (
+        {task.data && project.data && !notFound ? (
           <TaskDetails
             key={task.data.id}
             task={task.data}
             workspace={workspace}
-            project={project}
-            canEdit={canEdit}
+            project={project.data}
+            canEdit={canEditTasks(workspace, project.data, me.data?.id)}
             onOpenTask={setTaskId}
           />
         ) : (
@@ -108,11 +110,15 @@ export function TaskDrawer({
             <SheetDescription>
               {notFound ? "It may have been deleted." : "Loading task details."}
             </SheetDescription>
-            {task.isPending && <Skeleton className="mt-4 h-24" aria-busy />}
-            {task.isError && !notFound && (
+            {(task.isPending || (task.data && project.isPending)) &&
+              !notFound && <Skeleton className="mt-4 h-24" aria-busy />}
+            {(task.isError || project.isError) && !notFound && (
               <ErrorState
                 message="We couldn't load this task."
-                onRetry={() => task.refetch()}
+                onRetry={() => {
+                  task.refetch();
+                  project.refetch();
+                }}
               />
             )}
           </SheetHeader>
