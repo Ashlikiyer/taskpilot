@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
 from app.core.rate_limit import limiter, rate_limit_handler
-from app.routers import ai, auth, comments, health, projects, tasks, workspaces
+from app.routers import ai, auth, comments, digest, health, projects, tasks, workspaces
 
 API_PREFIX = "/api/v1"
 
@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(tasks.router, prefix=API_PREFIX)
     app.include_router(comments.router, prefix=API_PREFIX)
     app.include_router(ai.router, prefix=API_PREFIX)
+    app.include_router(digest.router, prefix=API_PREFIX)
     return app
 
 

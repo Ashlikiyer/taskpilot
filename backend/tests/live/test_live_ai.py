@@ -4,6 +4,8 @@ Run manually with:  uv run pytest -m live_ai
 Needs GROQ_API_KEY (and optionally AI_MODEL) in backend/.env.
 """
 
+from datetime import timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,3 +116,36 @@ async def test_thread_summary_against_the_real_model(
     )
     assert words < 80
     assert summary["next_steps"]
+
+
+async def test_digest_summary_against_the_real_model(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    owner = await create_user(db_session, email="owner@example.com", name="Olive Reyes")
+    workspace = await create_workspace(db_session, owner)
+    project = await create_project(db_session, workspace, [owner], name="Acme Website")
+    today = user_today("Asia/Manila")
+    for title, offset in [
+        ("Send the Acme invoice", -2),
+        ("Approve homepage copy", 0),
+        ("Book the photo shoot", 1),
+    ]:
+        await client.post(
+            f"/api/v1/projects/{project.id}/tasks",
+            json={
+                "title": title,
+                "due_date": str(today + timedelta(days=offset)),
+                "assignee_id": str(owner.id),
+            },
+            headers=auth_headers(owner),
+        )
+
+    response = await client.get(
+        f"/api/v1/workspaces/{workspace.id}/digest/today", headers=auth_headers(owner)
+    )
+
+    assert response.status_code == 200, response.text
+    summary = response.json()["summary"]
+    print("\nLIVE DIGEST:", summary)
+    assert summary is not None
+    assert len(summary.split()) <= 60
