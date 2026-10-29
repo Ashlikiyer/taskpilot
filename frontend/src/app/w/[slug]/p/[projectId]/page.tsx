@@ -5,16 +5,21 @@ import { useParams } from "next/navigation";
 
 import { ProjectHeader } from "@/components/projects/project-header";
 import { EmptyState, ErrorState } from "@/components/states";
+import { TaskDrawer } from "@/components/tasks/task-drawer";
+import { TaskList } from "@/components/tasks/task-list";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMe } from "@/hooks/use-auth";
 import { useProject } from "@/hooks/use-projects";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
 import { ApiError } from "@/lib/api/client";
+import { canEditTasks } from "@/lib/tasks";
 
 export default function ProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { workspace } = useCurrentWorkspace();
   const project = useProject(projectId);
+  const me = useMe();
   if (!workspace) return null;
 
   const notFound =
@@ -51,12 +56,20 @@ export default function ProjectPage() {
     );
   }
 
+  const canEdit = canEditTasks(workspace, project.data, me.data?.id);
+
   return (
     <div className="grid max-w-5xl gap-8">
       <ProjectHeader workspace={workspace} project={project.data} />
-      <EmptyState
-        title="No tasks yet"
-        description="The task board for this project is coming next."
+      <TaskList
+        workspace={workspace}
+        project={project.data}
+        canEdit={canEdit}
+      />
+      <TaskDrawer
+        workspace={workspace}
+        project={project.data}
+        canEdit={canEdit}
       />
     </div>
   );

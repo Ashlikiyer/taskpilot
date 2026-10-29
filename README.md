@@ -75,7 +75,8 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
 - [ ] Phase 1: core task management
   - [x] F1: accounts, workspaces, members and invite links
   - [x] F2: projects (colors, member lists, archive and restore)
-  - [ ] F3–F5: tasks, board/list views, comments, notifications
+  - [x] F3: tasks, subtasks, labels, fractional ordering and activity log
+  - [ ] F4–F5: board/list views, filters and search, comments, notifications
 - [ ] Phase 2: AI quick-add, subtask breakdown, thread summary, daily digest
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
@@ -91,3 +92,4 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | Next.js 16 workspace and invite pages | Read URL params outside a `<Suspense>` boundary, which Cache Components rejects | `next build` failed; fixed per the local Next.js docs |
 | 2026-10-29 | Local dev database | Started Postgres on port 5432, already used by a native Postgres install | Password auth failed; moved the container to 5433 |
 | 2026-10-29 | Project member checkboxes | Linked labels with `htmlFor`, but Base UI's checkbox doesn't put the `id` on the `role="checkbox"` element, so screen readers announced them with no name | A Testing Library query by accessible name failed; fixed with `aria-labelledby` |
+| 2026-10-29 | Typed API calls for creating tasks | Generated types marked fields with server defaults (`status`, `priority`) as required in request bodies, so valid calls failed to type-check | `tsc` errors; regenerated with `openapi-typescript --default-non-nullable false` |
