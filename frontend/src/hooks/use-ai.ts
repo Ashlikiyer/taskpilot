@@ -12,3 +12,19 @@ export function useQuickAdd(wsId: string) {
       ),
   });
 }
+
+/** Ask the AI for 3–8 subtask ideas. Nothing is saved; the user ticks which to create. */
+export function useSuggestSubtasks(taskId: string) {
+  return useMutation({
+    mutationFn: () =>
+      api.post<Schemas["SubtaskSuggestions"]>(`/tasks/${taskId}/ai/subtasks`),
+  });
+}
+
+/** Summarize a long comment thread. The backend caches it until a comment changes. */
+export function useSummarizeThread(taskId: string) {
+  return useMutation({
+    mutationFn: () =>
+      api.post<Schemas["ThreadSummaryOut"]>(`/tasks/${taskId}/ai/summary`),
+  });
+}

@@ -41,3 +41,76 @@ async def test_quick_add_against_the_real_model(
     assert draft["due_date"] is not None and draft["due_date"] >= str(user_today("Asia/Manila"))
     assert "invoice" in draft["title"].lower()
     assert draft["project_id"] in (str(project.id), None)
+
+
+async def test_subtasks_against_the_real_model(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    owner = await create_user(db_session, email="owner@example.com", name="Olive Reyes")
+    workspace = await create_workspace(db_session, owner)
+    project = await create_project(db_session, workspace, [owner], name="Acme Website")
+    task = (
+        await client.post(
+            f"/api/v1/projects/{project.id}/tasks",
+            json={
+                "title": "Launch the new Acme homepage",
+                "description": "New hero copy, updated photos, contact form must work on mobile.",
+            },
+            headers=auth_headers(owner),
+        )
+    ).json()
+
+    response = await client.post(
+        f"/api/v1/tasks/{task['id']}/ai/subtasks", headers=auth_headers(owner)
+    )
+
+    assert response.status_code == 200, response.text
+    subtasks = response.json()["subtasks"]
+    print("\nLIVE SUBTASKS:", subtasks)
+    assert 3 <= len(subtasks) <= 8
+    assert all(0 < len(s) <= 120 for s in subtasks)
+
+
+async def test_thread_summary_against_the_real_model(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    owner = await create_user(db_session, email="owner@example.com", name="Olive Reyes")
+    workspace = await create_workspace(db_session, owner)
+    mark = await add_member(db_session, workspace, "mark@example.com", MemberRole.member)
+    project = await create_project(db_session, workspace, [owner, mark], name="Acme Website")
+    task = (
+        await client.post(
+            f"/api/v1/projects/{project.id}/tasks",
+            json={"title": "Send the Acme invoice"},
+            headers=auth_headers(owner),
+        )
+    ).json()
+    thread = [
+        (owner, "Can you send the Acme invoice this week?"),
+        (mark, "Sure. Do we bill the old rate or the new one?"),
+        (owner, "New rate, it was approved on Monday."),
+        (mark, "Got it. I still need the PO number from Acme."),
+        (owner, "I'll ask their finance team today."),
+        (mark, "Thanks. I'll send it Friday once I have the PO."),
+    ]
+    for author, body in thread:
+        await client.post(
+            f"/api/v1/tasks/{task['id']}/comments",
+            json={"body": body},
+            headers=auth_headers(author),
+        )
+
+    response = await client.post(
+        f"/api/v1/tasks/{task['id']}/ai/summary", headers=auth_headers(owner)
+    )
+
+    assert response.status_code == 200, response.text
+    summary = response.json()
+    print("\nLIVE SUMMARY:", {k: summary[k] for k in ("decisions", "open_questions", "next_steps")})
+    words = sum(
+        len(point.split())
+        for key in ("decisions", "open_questions", "next_steps")
+        for point in summary[key]
+    )
+    assert words < 80
+    assert summary["next_steps"]

@@ -3,20 +3,36 @@ model returns is checked against the workspace before it reaches the user."""
 
 import json
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import AppError
 from app.db.models import MemberRole
+from app.repositories import comments as comments_repo
 from app.repositories import labels as labels_repo
 from app.repositories import projects as projects_repo
+from app.repositories import tasks as tasks_repo
 from app.repositories import workspaces as workspaces_repo
-from app.schemas.ai import QuickAddDraft, QuickAddRequest
+from app.repositories.tasks import TaskFilters
+from app.schemas.ai import (
+    QuickAddDraft,
+    QuickAddRequest,
+    SubtaskSuggestions,
+    ThreadSummary,
+    ThreadSummaryOut,
+)
+from app.services import mentions
+from app.services import tasks as tasks_service
 from app.services.ai import prompts
 from app.services.ai.provider import AIProvider
 from app.services.ai.runner import run_json
 from app.services.dates import user_today
+from app.services.tasks import TaskContext
 from app.services.workspaces import ROLE_RANK, WorkspaceContext
+
+# Long descriptions are cut so a single request stays small and cheap.
+MAX_DESCRIPTION_CHARS = 4000
 
 
 async def _usable_projects(db: AsyncSession, ctx: WorkspaceContext) -> dict[uuid.UUID, str]:
@@ -110,3 +126,95 @@ def _check_draft(
             "warnings": warnings[:10],
         }
     )
+
+
+async def suggest_subtasks(
+    db: AsyncSession, ctx: TaskContext, provider: AIProvider
+) -> SubtaskSuggestions:
+    """Suggest subtasks for a top-level task. The user picks which ones to create."""
+    ctx.project.workspace.require(MemberRole.member)
+    await tasks_service.require_can_edit(db, ctx.project)
+    task = ctx.task
+    if task.parent_id is not None:
+        raise AppError(400, "VALIDATION_ERROR", "Subtasks can't be broken down further")
+
+    existing, _ = await tasks_repo.list_page(
+        db, task.project_id, TaskFilters(parent_id=task.id), sort="position", page=1, page_size=100
+    )
+    context = {
+        "TASK": task.title,
+        "DESCRIPTION": (task.description or "")[:MAX_DESCRIPTION_CHARS] or None,
+        "PROJECT": ctx.project.project.name,
+        "EXISTING_SUBTASKS": [subtask.title for subtask in existing],
+    }
+    suggestions = await run_json(
+        db,
+        provider,
+        user=ctx.project.workspace.user,
+        workspace_id=ctx.project.project.workspace_id,
+        feature="subtasks",
+        system=prompts.SUBTASKS,
+        prompt=json.dumps(context, ensure_ascii=False),
+        schema=SubtaskSuggestions,
+    )
+    # The model is told not to repeat existing subtasks; make sure of it.
+    seen = {subtask.title.strip().lower() for subtask in existing}
+    unique: list[str] = []
+    for title in suggestions.subtasks:
+        if title.lower() not in seen:
+            seen.add(title.lower())
+            unique.append(title)
+    return SubtaskSuggestions.model_construct(subtasks=unique)
+
+
+SUMMARY_MIN_COMMENTS = 6  # the spec offers summaries when a task has more than 5 comments
+MAX_SUMMARY_COMMENTS = 60
+MAX_COMMENT_CHARS = 1500
+
+
+async def summarize_thread(
+    db: AsyncSession, ctx: TaskContext, provider: AIProvider
+) -> ThreadSummaryOut:
+    """Summarize a task's comments. Cached on the task until a comment changes."""
+    ctx.project.workspace.require(MemberRole.member)
+    task = ctx.task
+    if task.summary is not None and task.summary_updated_at is not None:
+        cached = ThreadSummary.model_validate(task.summary)
+        return ThreadSummaryOut(
+            **cached.model_dump(), generated_at=task.summary_updated_at, cached=True
+        )
+
+    comments = await comments_repo.list_for_task(db, task.id)
+    if len(comments) < SUMMARY_MIN_COMMENTS:
+        raise AppError(
+            400,
+            "VALIDATION_ERROR",
+            "Summaries are available once a task has more than 5 comments.",
+        )
+
+    # First names and plain-text mentions only; no emails or ids go to the AI.
+    context = {
+        "TASK": task.title,
+        "COMMENTS": [
+            {
+                "author": (name or "Former member").split()[0],
+                "date": comment.created_at.date().isoformat(),
+                "text": mentions.to_plain_text(comment.body)[:MAX_COMMENT_CHARS],
+            }
+            for comment, name in comments[-MAX_SUMMARY_COMMENTS:]
+        ],
+    }
+    summary = await run_json(
+        db,
+        provider,
+        user=ctx.project.workspace.user,
+        workspace_id=ctx.project.project.workspace_id,
+        feature="summary",
+        system=prompts.THREAD_SUMMARY,
+        prompt=json.dumps(context, ensure_ascii=False),
+        schema=ThreadSummary,
+    )
+    task.summary = summary.model_dump()
+    task.summary_updated_at = datetime.now(UTC)
+    await db.commit()
+    return ThreadSummaryOut(**task.summary, generated_at=task.summary_updated_at, cached=False)

@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  SUMMARY_MIN_COMMENTS,
+  ThreadSummary,
+} from "@/components/ai/thread-summary";
 import { CommentComposer } from "@/components/comments/comment-composer";
 import { Markdown } from "@/components/markdown";
 import { ErrorState } from "@/components/states";
@@ -23,6 +27,8 @@ type Props = {
   currentUserId: string | undefined;
   /** False in archived projects: the thread stays readable but can't change. */
   canComment: boolean;
+  /** AI features are for members and above (not viewers). */
+  canUseAI: boolean;
 };
 
 export function CommentThread({
@@ -30,6 +36,7 @@ export function CommentThread({
   members,
   currentUserId,
   canComment,
+  canUseAI,
 }: Props) {
   const comments = useComments(taskId);
   const createComment = useCreateComment(taskId);
@@ -50,6 +57,17 @@ export function CommentThread({
           </span>
         )}
       </h3>
+      {canUseAI &&
+        comments.data &&
+        comments.data.length >= SUMMARY_MIN_COMMENTS && (
+          <ThreadSummary
+            // A new key whenever the thread changes, so a stale summary is dropped.
+            key={comments.data
+              .map((c) => `${c.id}:${c.edited_at ?? ""}`)
+              .join(",")}
+            taskId={taskId}
+          />
+        )}
       {comments.isPending && <Skeleton className="h-16" />}
       {comments.isError && (
         <ErrorState

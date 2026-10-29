@@ -70,7 +70,7 @@ async def _is_project_member(db: AsyncSession, ctx: ProjectContext) -> bool:
     return ctx.workspace.user.id in members[ctx.project.id]
 
 
-async def _require_can_edit(db: AsyncSession, ctx: ProjectContext) -> None:
+async def require_can_edit(db: AsyncSession, ctx: ProjectContext) -> None:
     """Admins edit tasks anywhere; members only in projects they belong to."""
     role = ctx.workspace.role
     if role == MemberRole.viewer or (
@@ -220,7 +220,7 @@ async def create(
     *,
     source: TaskSource | None = None,
 ) -> TaskOut:
-    await _require_can_edit(db, ctx)
+    await require_can_edit(db, ctx)
     if data.parent_id is not None:
         parent = await tasks_repo.get_by_id(db, data.parent_id)
         if parent is None or parent.project_id != ctx.project.id:
@@ -259,7 +259,7 @@ async def get(db: AsyncSession, ctx: TaskContext) -> TaskOut:
 
 
 async def update(db: AsyncSession, ctx: TaskContext, data: TaskUpdate) -> TaskOut:
-    await _require_can_edit(db, ctx.project)
+    await require_can_edit(db, ctx.project)
     task = ctx.task
     sent = data.model_fields_set
     entries: list[ActivityLog] = []
@@ -335,7 +335,7 @@ async def _neighbour(
 
 async def move(db: AsyncSession, ctx: TaskContext, data: TaskMove) -> TaskOut:
     """Place a top-level task in a column between two neighbouring cards."""
-    await _require_can_edit(db, ctx.project)
+    await require_can_edit(db, ctx.project)
     task = ctx.task
     if task.parent_id is not None:
         raise _validation_error("Subtasks can't be moved on the board")
@@ -382,7 +382,7 @@ async def delete(db: AsyncSession, ctx: TaskContext) -> None:
         role == MemberRole.member and is_creator
     ):
         raise ForbiddenError("You can only delete tasks you created")
-    await _require_can_edit(db, ctx.project)
+    await require_can_edit(db, ctx.project)
     await activity_repo.add(
         db, [_entry(ctx.project, ctx.task.id, "deleted", old_value=ctx.task.title)]
     )

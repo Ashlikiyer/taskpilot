@@ -71,7 +71,7 @@ AI tests use a fake provider, so they are free and repeatable. To check the prom
 real model (uses your Groq quota), set `GROQ_API_KEY` in `backend/.env` and run:
 
 ```bash
-cd backend && uv run pytest -m live_ai -s
+cd backend && uv run pytest -m live_ai -rP
 ```
 
 CI runs the same checks on every pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
@@ -87,7 +87,7 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
   - [x] F5: markdown comments with @mentions, in-app notifications and unread bell
 - [ ] Phase 2: AI features
   - [x] AI module (Groq behind a provider interface, validated JSON, usage log, daily limit) and F6 quick-add
-  - [ ] F7 subtask breakdown, F8 thread summary
+  - [x] F7 subtask breakdown, F8 thread summary (cached until the comments change)
   - [ ] F9 daily digest
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment

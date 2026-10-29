@@ -512,6 +512,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks/{task_id}/ai/subtasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suggest Subtasks
+         * @description Suggest 3-8 subtasks. Nothing is saved; the user ticks which ones to create.
+         */
+        post: operations["suggest_subtasks_api_v1_tasks__task_id__ai_subtasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}/ai/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Summarize Thread
+         * @description Decisions, open questions and next steps from a thread of more than 5 comments.
+         */
+        post: operations["summarize_thread_api_v1_tasks__task_id__ai_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -862,6 +902,14 @@ export interface components {
             /** Projects */
             projects: components["schemas"]["ProjectOut"][];
         };
+        /**
+         * SubtaskSuggestions
+         * @description The spec's F7 model: 3 to 8 subtask titles, each at most 120 characters.
+         */
+        SubtaskSuggestions: {
+            /** Subtasks */
+            subtasks: string[];
+        };
         /** TaskCreate */
         TaskCreate: {
             /** Title */
@@ -989,6 +1037,22 @@ export interface components {
             due_date?: string | null;
             /** Label Ids */
             label_ids?: string[] | null;
+        };
+        /** ThreadSummaryOut */
+        ThreadSummaryOut: {
+            /** Decisions */
+            decisions: string[];
+            /** Open Questions */
+            open_questions: string[];
+            /** Next Steps */
+            next_steps: string[];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Cached */
+            cached: boolean;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -2353,6 +2417,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickAddDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_subtasks_api_v1_tasks__task_id__ai_subtasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubtaskSuggestions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summarize_thread_api_v1_tasks__task_id__ai_summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadSummaryOut"];
                 };
             };
             /** @description Validation Error */
