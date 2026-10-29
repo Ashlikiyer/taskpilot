@@ -77,6 +77,20 @@ async def get_member_by_email(
     return result.scalar_one_or_none()
 
 
+async def filter_member_ids(
+    db: AsyncSession, workspace_id: uuid.UUID, user_ids: set[uuid.UUID]
+) -> set[uuid.UUID]:
+    """Return the subset of `user_ids` that are members of the workspace."""
+    if not user_ids:
+        return set()
+    result = await db.execute(
+        select(WorkspaceMember.user_id).where(
+            WorkspaceMember.workspace_id == workspace_id, WorkspaceMember.user_id.in_(user_ids)
+        )
+    )
+    return set(result.scalars())
+
+
 async def list_members(
     db: AsyncSession, workspace_id: uuid.UUID
 ) -> list[tuple[WorkspaceMember, User]]:

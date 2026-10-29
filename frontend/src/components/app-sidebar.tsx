@@ -3,11 +3,15 @@
 import {
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
+  PlusIcon,
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +21,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserMenu } from "@/components/user-menu";
+import { useProjects } from "@/hooks/use-projects";
 import type { Schemas } from "@/lib/api/client";
-import { ROLE_LABELS } from "@/lib/roles";
+import { hasRole, ROLE_LABELS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 type Workspace = Schemas["WorkspaceOut"];
@@ -103,9 +109,95 @@ export function AppSidebar({
         })}
       </nav>
 
+      <SidebarProjects workspace={workspace} pathname={pathname} />
+
       <div className="md:mt-auto">
         <UserMenu />
       </div>
     </aside>
+  );
+}
+
+function SidebarProjects({
+  workspace,
+  pathname,
+}: {
+  workspace: Workspace;
+  pathname: string;
+}) {
+  const projects = useProjects(workspace.id);
+  const [creating, setCreating] = useState(false);
+  const canCreate = hasRole(workspace.role, "admin");
+
+  return (
+    <section aria-labelledby="sidebar-projects" className="grid gap-1">
+      <div className="flex items-center justify-between px-2">
+        <h2
+          id="sidebar-projects"
+          className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
+          Projects
+        </h2>
+        {canCreate && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="New project"
+            title="New project"
+            onClick={() => setCreating(true)}
+          >
+            <PlusIcon />
+          </Button>
+        )}
+      </div>
+
+      {projects.isPending && <Skeleton className="mx-2 h-6" />}
+      {projects.isError && (
+        <p className="px-2 text-sm text-muted-foreground">
+          Couldn&apos;t load projects.{" "}
+          <button className="underline" onClick={() => projects.refetch()}>
+            Retry
+          </button>
+        </p>
+      )}
+      {projects.data?.length === 0 && (
+        <p className="px-2 text-sm text-muted-foreground">No projects yet.</p>
+      )}
+      {projects.data && projects.data.length > 0 && (
+        <ul className="flex gap-1 overflow-x-auto md:grid md:overflow-visible">
+          {projects.data.map((project) => {
+            const href = `/w/${workspace.slug}/p/${project.id}`;
+            const active = pathname.startsWith(href);
+            return (
+              <li key={project.id} className="shrink-0">
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted",
+                    active && "bg-muted font-medium",
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  <span className="truncate">{project.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {canCreate && (
+        <ProjectFormDialog
+          workspace={workspace}
+          open={creating}
+          onOpenChange={setCreating}
+        />
+      )}
+    </section>
   );
 }

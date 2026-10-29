@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, ForbiddenError, NotFoundError
 from app.db.models import MemberRole, User, Workspace, WorkspaceMember
+from app.repositories import projects as projects_repo
 from app.repositories import users as users_repo
 from app.repositories import workspaces as workspaces_repo
 from app.schemas.workspace import MemberOut, WorkspaceOut
@@ -147,5 +148,6 @@ async def update_member_role(
 
 async def remove_member(db: AsyncSession, ctx: WorkspaceContext, user_id: uuid.UUID) -> None:
     member = await _get_changeable_member(db, ctx, user_id)
+    await projects_repo.remove_user_from_workspace_projects(db, ctx.workspace.id, user_id)
     await workspaces_repo.delete_member(db, member)
     await db.commit()

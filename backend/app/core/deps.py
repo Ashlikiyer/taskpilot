@@ -11,7 +11,9 @@ from app.core.security import decode_access_token
 from app.db.models import MemberRole, User
 from app.db.session import SessionLocal
 from app.repositories import users as users_repo
+from app.services import projects as projects_service
 from app.services import workspaces as workspaces_service
+from app.services.projects import ProjectContext
 from app.services.workspaces import WorkspaceContext
 
 
@@ -47,6 +49,15 @@ async def get_workspace_context(
 
 
 AnyMember = Annotated[WorkspaceContext, Depends(get_workspace_context)]
+
+
+async def get_project_context(
+    project_id: uuid.UUID, db: DbSession, user: CurrentUser
+) -> ProjectContext:
+    return await projects_service.get_context(db, project_id, user)
+
+
+ProjectAccess = Annotated[ProjectContext, Depends(get_project_context)]
 
 
 def require_role(min_role: MemberRole) -> Callable[..., Awaitable[WorkspaceContext]]:

@@ -74,7 +74,8 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
 - [x] Phase 0: monorepo, FastAPI skeleton with health check, Alembic, Next.js with API rewrite, CI
 - [ ] Phase 1: core task management
   - [x] F1: accounts, workspaces, members and invite links
-  - [ ] F2–F5: projects, tasks, board/list views, comments, notifications
+  - [x] F2: projects (colors, member lists, archive and restore)
+  - [ ] F3–F5: tasks, board/list views, comments, notifications
 - [ ] Phase 2: AI quick-add, subtask breakdown, thread summary, daily digest
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
@@ -89,3 +90,4 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | Auth guard for logged-in pages | Redirected to /login on *any* error, so a backend outage looked like being logged out | Review against the spec's "every page has an error state" rule |
 | 2026-10-29 | Next.js 16 workspace and invite pages | Read URL params outside a `<Suspense>` boundary, which Cache Components rejects | `next build` failed; fixed per the local Next.js docs |
 | 2026-10-29 | Local dev database | Started Postgres on port 5432, already used by a native Postgres install | Password auth failed; moved the container to 5433 |
+| 2026-10-29 | Project member checkboxes | Linked labels with `htmlFor`, but Base UI's checkbox doesn't put the `id` on the `role="checkbox"` element, so screen readers announced them with no name | A Testing Library query by accessible name failed; fixed with `aria-labelledby` |
