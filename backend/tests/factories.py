@@ -3,7 +3,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, hash_password
-from app.db.models import MemberRole, User, Workspace
+from app.db.models import MemberRole, Project, User, Workspace
+from app.repositories import projects as projects_repo
 from app.repositories import users as users_repo
 from app.repositories import workspaces as workspaces_repo
 
@@ -34,3 +35,13 @@ async def add_member(db: AsyncSession, workspace: Workspace, email: str, role: M
     user = await create_user(db, email=email, name=email.split("@")[0].title())
     await workspaces_repo.add_member(db, workspace.id, user.id, role)
     return user
+
+
+async def create_project(
+    db: AsyncSession, workspace: Workspace, members: list[User], name: str = "Website"
+) -> Project:
+    project = await projects_repo.create(
+        db, workspace_id=workspace.id, name=name, description=None, color="#6366f1"
+    )
+    await projects_repo.set_members(db, project.id, {user.id for user in members})
+    return project
