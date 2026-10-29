@@ -1,3 +1,4 @@
+import re
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -6,7 +7,7 @@ from datetime import date
 from sqlalchemy import ColumnElement, case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Task, TaskLabel, TaskPriority, TaskStatus
+from app.db.models import Project, Task, TaskLabel, TaskPriority, TaskStatus
 
 SORTABLE = {
     "position": Task.position,
@@ -28,6 +29,21 @@ class TaskFilters:
     due_to: date | None = None
     # None lists top-level tasks; a task id lists that task's subtasks.
     parent_id: uuid.UUID | None = None
+    q: str | None = None
+
+
+def prefix_tsquery(text: str) -> str | None:
+    """Turn user input into a prefix tsquery: "acme inv" -> "acme:* & inv:*".
+
+    Only word characters are kept, so tsquery operators typed by the user can't
+    cause syntax errors; the result is still sent as a bound parameter.
+    """
+    words = re.findall(r"\w+", text.lower())[:10]
+    return " & ".join(f"{word}:*" for word in words) or None
+
+
+def _matches(query: str) -> ColumnElement[bool]:
+    return Task.search_vector.op("@@")(func.to_tsquery("simple", query))
 
 
 async def create(db: AsyncSession, task: Task) -> Task:
@@ -70,6 +86,11 @@ async def list_page(
         conditions.append(Task.due_date >= filters.due_from)
     if filters.due_to:
         conditions.append(Task.due_date <= filters.due_to)
+    if filters.q is not None:
+        query = prefix_tsquery(filters.q)
+        if query is None:
+            return [], 0
+        conditions.append(_matches(query))
 
     descending = sort.startswith("-")
     column = SORTABLE[sort.lstrip("-")]
@@ -135,3 +156,41 @@ async def subtask_counts(
 
 async def delete_task(db: AsyncSession, task: Task) -> None:
     await db.execute(delete(Task).where(Task.id == task.id))
+
+
+async def search_in_workspace(
+    db: AsyncSession, workspace_id: uuid.UUID, text: str, *, limit: int
+) -> list[Task]:
+    """Tasks (including subtasks and archived projects) matching the text, best first."""
+    query = prefix_tsquery(text)
+    if query is None:
+        return []
+    result = await db.execute(
+        select(Task)
+        .join(Project, Project.id == Task.project_id)
+        .where(Project.workspace_id == workspace_id, _matches(query))
+        .order_by(
+            func.ts_rank(Task.search_vector, func.to_tsquery("simple", query)).desc(),
+            Task.updated_at.desc(),
+        )
+        .limit(limit)
+    )
+    return list(result.scalars())
+
+
+async def assigned_to_user(
+    db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID
+) -> list[Task]:
+    """Open tasks assigned to the user in the workspace's active projects."""
+    result = await db.execute(
+        select(Task)
+        .join(Project, Project.id == Task.project_id)
+        .where(
+            Project.workspace_id == workspace_id,
+            Project.archived_at.is_(None),
+            Task.assignee_id == user_id,
+            Task.status != TaskStatus.done,
+        )
+        .order_by(Task.due_date.asc().nulls_last(), Task.priority.desc(), Task.position)
+    )
+    return list(result.scalars())

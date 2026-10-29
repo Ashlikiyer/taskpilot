@@ -123,7 +123,7 @@ def _label_names(labels: list[Label]) -> str | None:
     return ", ".join(sorted(label.name for label in labels)) or None
 
 
-async def _to_outs(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
+async def to_outs(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
     ids = [task.id for task in tasks]
     labels = await labels_repo.labels_by_task(db, ids)
     counts = await tasks_repo.subtask_counts(db, ids)
@@ -154,7 +154,7 @@ async def _to_outs(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
 
 async def _to_out(db: AsyncSession, task: Task) -> TaskOut:
     await db.refresh(task)
-    return (await _to_outs(db, [task]))[0]
+    return (await to_outs(db, [task]))[0]
 
 
 def _apply_status(task: Task, status: TaskStatus) -> None:
@@ -196,7 +196,7 @@ async def list_tasks(
     tasks, total = await tasks_repo.list_page(
         db, ctx.project.id, filters, sort=sort, page=page, page_size=page_size
     )
-    return TaskPage(items=await _to_outs(db, tasks), total=total, page=page, page_size=page_size)
+    return TaskPage(items=await to_outs(db, tasks), total=total, page=page, page_size=page_size)
 
 
 async def create(

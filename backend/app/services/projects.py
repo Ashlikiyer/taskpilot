@@ -38,6 +38,11 @@ def _to_out(project: Project, member_ids: list[uuid.UUID]) -> ProjectOut:
     )
 
 
+async def to_outs(db: AsyncSession, projects: list[Project]) -> list[ProjectOut]:
+    members = await projects_repo.member_ids_by_project(db, (p.id for p in projects))
+    return [_to_out(project, members[project.id]) for project in projects]
+
+
 async def _out(db: AsyncSession, project: Project) -> ProjectOut:
     members = await projects_repo.member_ids_by_project(db, [project.id])
     return _to_out(project, members[project.id])
@@ -76,8 +81,7 @@ async def list_projects(
     projects = await projects_repo.list_for_workspace(
         db, ctx.workspace.id, include_archived=include_archived
     )
-    members = await projects_repo.member_ids_by_project(db, (p.id for p in projects))
-    return [_to_out(project, members[project.id]) for project in projects]
+    return await to_outs(db, projects)
 
 
 async def create(db: AsyncSession, ctx: WorkspaceContext, data: ProjectCreate) -> ProjectOut:
