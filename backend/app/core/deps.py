@@ -12,8 +12,10 @@ from app.db.models import MemberRole, User
 from app.db.session import SessionLocal
 from app.repositories import users as users_repo
 from app.services import projects as projects_service
+from app.services import tasks as tasks_service
 from app.services import workspaces as workspaces_service
 from app.services.projects import ProjectContext
+from app.services.tasks import TaskContext
 from app.services.workspaces import WorkspaceContext
 
 
@@ -58,6 +60,13 @@ async def get_project_context(
 
 
 ProjectAccess = Annotated[ProjectContext, Depends(get_project_context)]
+
+
+async def get_task_context(task_id: uuid.UUID, db: DbSession, user: CurrentUser) -> TaskContext:
+    return await tasks_service.get_context(db, task_id, user)
+
+
+TaskAccess = Annotated[TaskContext, Depends(get_task_context)]
 
 
 def require_role(min_role: MemberRole) -> Callable[..., Awaitable[WorkspaceContext]]:
