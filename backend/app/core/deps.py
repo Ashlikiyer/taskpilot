@@ -15,6 +15,7 @@ from app.services import comments as comments_service
 from app.services import projects as projects_service
 from app.services import tasks as tasks_service
 from app.services import workspaces as workspaces_service
+from app.services.ai.provider import AIProvider, get_provider
 from app.services.comments import CommentContext
 from app.services.projects import ProjectContext
 from app.services.tasks import TaskContext
@@ -78,6 +79,14 @@ async def get_comment_context(
 
 
 CommentAccess = Annotated[CommentContext, Depends(get_comment_context)]
+
+
+def get_ai_provider() -> AIProvider:
+    """Overridden with a fake provider in tests."""
+    return get_provider()
+
+
+AI = Annotated[AIProvider, Depends(get_ai_provider)]
 
 
 def require_role(min_role: MemberRole) -> Callable[..., Awaitable[WorkspaceContext]]:

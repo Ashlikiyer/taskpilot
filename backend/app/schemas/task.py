@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator
 
@@ -38,6 +38,8 @@ class TaskCreate(BaseModel):
     due_date: date | None = None
     label_ids: LabelIds = []
     parent_id: uuid.UUID | None = None
+    # Set by the quick-add preview when the user confirms an AI draft.
+    source: Literal["manual", "ai_quick_add"] = "manual"
 
     _description = field_validator("description")(_blank_to_none)
 
