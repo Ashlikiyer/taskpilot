@@ -2,12 +2,14 @@ import os
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-# Point the app at the test database before any app module creates an engine.
+# Configure the app for tests before any app module reads settings or creates an engine.
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
     "postgresql+asyncpg://postgres:postgres@localhost:5433/taskpilot_test",
 )
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+os.environ["JWT_SECRET"] = "test-jwt-secret-that-is-at-least-32-characters"
+os.environ["RATE_LIMIT_ENABLED"] = "false"
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
@@ -50,6 +52,7 @@ async def db_session() -> AsyncIterator[AsyncSession]:
 @pytest.fixture
 async def client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
     app.dependency_overrides[get_db] = lambda: db_session
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    # https so the Secure refresh cookie is stored and sent like in a browser.
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as ac:
         yield ac
     app.dependency_overrides.clear()

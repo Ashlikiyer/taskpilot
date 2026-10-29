@@ -6,7 +6,10 @@ dependencies = [
     "alembic>=1.20.1",
     "asyncpg>=0.32.0",
     "fastapi[standard]>=0.162.0",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.16.2",
+    "pyjwt>=2.15.1",
+    "slowapi>=0.1.10",
     "sqlalchemy[asyncio]>=2.1.6",
 ]
 
@@ -41,6 +44,10 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 markers = ["live_ai: calls the real AI provider (run manually with -m live_ai)"]
 addopts = "-m 'not live_ai'"
+filterwarnings = [
+    # slowapi still calls asyncio.iscoroutinefunction (third-party, harmless on 3.14)
+    "ignore:.*iscoroutinefunction.*:DeprecationWarning:slowapi",
+]
 
 [tool.coverage.run]
 source = ["app"]
