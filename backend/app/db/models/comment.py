@@ -25,6 +25,7 @@ class NotificationType(StrEnum):
     mentioned = "mentioned"
     comment = "comment"
     due_tomorrow = "due_tomorrow"
+    digest = "digest"
 
 
 class Notification(UUIDPrimaryKeyMixin, TimestampMixin, Base):

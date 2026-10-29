@@ -4,6 +4,7 @@ from app.db.models.ai import AIUsage
 from app.db.models.auth import RefreshToken
 from app.db.models.base import Base
 from app.db.models.comment import Comment, Notification, NotificationType
+from app.db.models.digest import Digest
 from app.db.models.project import Project, ProjectMember
 from app.db.models.task import (
     ActivityLog,
@@ -22,6 +23,7 @@ __all__ = [
     "ActivityLog",
     "Base",
     "Comment",
+    "Digest",
     "Invite",
     "Label",
     "MemberRole",

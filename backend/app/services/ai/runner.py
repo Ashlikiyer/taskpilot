@@ -25,6 +25,9 @@ from app.services.dates import user_today
 logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 2  # the first try plus one retry with the validation error
+# Calls the system makes on a user's behalf (the daily digest) are logged but don't
+# use up that user's personal daily limit.
+SYSTEM_FEATURES = frozenset({"digest"})
 
 
 def ai_unavailable() -> AppError:
@@ -37,7 +40,9 @@ async def _check_daily_limit(db: AsyncSession, user: User) -> None:
     settings = get_settings()
     zone = settings.app_timezone
     midnight = datetime.combine(user_today(zone), day_start(0), tzinfo=ZoneInfo(zone))
-    used = await ai_usage_repo.count_since(db, user.id, midnight.astimezone(UTC))
+    used = await ai_usage_repo.count_since(
+        db, user.id, midnight.astimezone(UTC), exclude_features=SYSTEM_FEATURES
+    )
     if used >= settings.ai_daily_limit_per_user:
         raise AppError(
             429,
@@ -88,7 +93,8 @@ async def run_json[T: BaseModel](
     schema: type[T],
 ) -> T:
     """Ask the provider for JSON matching `schema`; retry once with the error appended."""
-    await _check_daily_limit(db, user)
+    if feature not in SYSTEM_FEATURES:
+        await _check_daily_limit(db, user)
     messages = [Message("user", prompt)]
 
     for attempt in range(1, MAX_ATTEMPTS + 1):

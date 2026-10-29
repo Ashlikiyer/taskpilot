@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     groq_api_key: SecretStr | None = None
     ai_model: str = "openai/gpt-oss-20b"
     ai_timeout_seconds: float = 20.0
+    # Shared secret for POST /internal/digest/run (GitHub Actions). Unset = endpoint disabled.
+    cron_secret: SecretStr | None = None
     rate_limit_enabled: bool = True
 
 

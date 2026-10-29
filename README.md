@@ -85,10 +85,10 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
   - [x] F3: tasks, subtasks, labels, fractional ordering and activity log
   - [x] F4: Kanban board (drag and drop, keyboard accessible), list view with filters, My Tasks, Ctrl/Cmd+K search
   - [x] F5: markdown comments with @mentions, in-app notifications and unread bell
-- [ ] Phase 2: AI features
+- [x] Phase 2: AI features
   - [x] AI module (Groq behind a provider interface, validated JSON, usage log, daily limit) and F6 quick-add
   - [x] F7 subtask breakdown, F8 thread summary (cached until the comments change)
-  - [ ] F9 daily digest
+  - [x] F9 daily digest (8:00 AM PHT via GitHub Actions; due-tomorrow notifications)
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
 
@@ -106,3 +106,4 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | Typed API calls for creating tasks | Generated types marked fields with server defaults (`status`, `priority`) as required in request bodies, so valid calls failed to type-check | `tsc` errors; regenerated with `openapi-typescript --default-non-nullable false` |
 | 2026-10-29 | My Tasks grouped by the user's timezone | Used `zoneinfo` without `tzdata`, which works on Linux but has no timezone data on Windows, so "Asia/Manila" failed to load | Checked `ZoneInfo("Asia/Manila")` on the dev machine before relying on it; added `tzdata` |
 | 2026-10-29 | Comments and notifications | Relied on Postgres `now()` for `created_at`, which is the *transaction* start time, so rows written in one request (a comment and its notifications) tied and came back in random order | A notification-order test failed intermittently; timestamps are now set in Python, with the DB default as a fallback |
+| 2026-10-29 | Digest summary word limit | Enforced the 60-word limit in Pydantic's `model_post_init`, where errors are raised as plain `ValueError` instead of `ValidationError`, so a too-long AI reply would crash instead of being retried | Code review before running; moved to a `model_validator` and tested with an 80-word reply |

@@ -1,0 +1,25 @@
+name: Daily digest
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 00:00 UTC = 8:00 AM PHT
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the digest
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          # Until the app is deployed and both secrets are set, skip instead of failing daily.
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "API_URL or CRON_SECRET is not set yet; skipping."
+            exit 0
+          fi
+          # The retries cover Render's free-tier cold start (about a minute).
+          curl -fsS -X POST "$API_URL/api/v1/internal/digest/run" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            --retry 3 --retry-delay 60 --retry-all-errors --max-time 300
