@@ -5,6 +5,7 @@ import {
   CircleCheckIcon,
   LayoutDashboardIcon,
   PlusIcon,
+  SunriseIcon,
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -44,7 +45,7 @@ export function AppSidebar({
   const base = `/w/${workspace.slug}`;
   const nav = [
     { href: base, label: "Dashboard", icon: LayoutDashboardIcon },
-    // Viewers can't be assigned tasks, so they have no My Tasks page.
+    // Viewers can't be assigned tasks, so they have no My Tasks or Digest page.
     ...(workspace.role === "viewer"
       ? []
       : [
@@ -53,6 +54,7 @@ export function AppSidebar({
             label: "My Tasks",
             icon: CircleCheckIcon,
           },
+          { href: `${base}/digest`, label: "Digest", icon: SunriseIcon },
         ]),
     { href: `${base}/settings/members`, label: "Members", icon: UsersIcon },
   ];

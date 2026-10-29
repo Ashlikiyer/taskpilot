@@ -98,7 +98,9 @@ function TaskGroup({
 }) {
   if (tasks.length === 0) return null;
   return (
-    <section aria-label={`${title}, ${tasks.length} tasks`}>
+    <section
+      aria-label={`${title}, ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
+    >
       <h2
         className={`mb-1 flex items-center gap-2 px-3 text-sm font-medium ${tone}`}
       >

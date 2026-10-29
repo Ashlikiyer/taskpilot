@@ -552,6 +552,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws_id}/digest/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Digest Today
+         * @description Today's digest for the current user in this workspace (built on first view).
+         */
+        get: operations["digest_today_api_v1_workspaces__ws_id__digest_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/digest/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Digest
+         * @description Called by GitHub Actions every morning at 8:00 AM PHT. Idempotent.
+         */
+        post: operations["run_digest_api_v1_internal_digest_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -618,6 +658,87 @@ export interface components {
         CommentUpdate: {
             /** Body */
             body: string;
+        };
+        /** DigestContent */
+        DigestContent: {
+            /**
+             * Overdue
+             * @default []
+             */
+            overdue?: components["schemas"]["DigestTask"][];
+            /**
+             * Due Today
+             * @default []
+             */
+            due_today?: components["schemas"]["DigestTask"][];
+            /**
+             * At Risk
+             * @default []
+             */
+            at_risk?: components["schemas"]["DigestTask"][];
+        };
+        /** DigestOut */
+        DigestOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            content: components["schemas"]["DigestContent"];
+            /** Summary */
+            summary: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** DigestRunResult */
+        DigestRunResult: {
+            /** Digests Created */
+            digests_created: number;
+            /** Notifications Sent */
+            notifications_sent: number;
+            /** Due Tomorrow Notifications */
+            due_tomorrow_notifications: number;
+        };
+        /**
+         * DigestTask
+         * @description A snapshot of a task when the digest was built.
+         */
+        DigestTask: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Status */
+            status: string;
+            /** Priority */
+            priority: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Reason */
+            reason?: ("due_soon" | "stalled") | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2479,6 +2600,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThreadSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    digest_today_api_v1_workspaces__ws_id__digest_today_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DigestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_digest_api_v1_internal_digest_run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-cron-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DigestRunResult"];
                 };
             };
             /** @description Validation Error */
