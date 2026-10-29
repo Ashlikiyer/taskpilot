@@ -72,12 +72,12 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
 ## Roadmap
 
 - [x] Phase 0: monorepo, FastAPI skeleton with health check, Alembic, Next.js with API rewrite, CI
-- [ ] Phase 1: core task management
+- [x] Phase 1: core task management
   - [x] F1: accounts, workspaces, members and invite links
   - [x] F2: projects (colors, member lists, archive and restore)
   - [x] F3: tasks, subtasks, labels, fractional ordering and activity log
   - [x] F4: Kanban board (drag and drop, keyboard accessible), list view with filters, My Tasks, Ctrl/Cmd+K search
-  - [ ] F5: comments and notifications
+  - [x] F5: markdown comments with @mentions, in-app notifications and unread bell
 - [ ] Phase 2: AI quick-add, subtask breakdown, thread summary, daily digest
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
@@ -95,3 +95,4 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | Project member checkboxes | Linked labels with `htmlFor`, but Base UI's checkbox doesn't put the `id` on the `role="checkbox"` element, so screen readers announced them with no name | A Testing Library query by accessible name failed; fixed with `aria-labelledby` |
 | 2026-10-29 | Typed API calls for creating tasks | Generated types marked fields with server defaults (`status`, `priority`) as required in request bodies, so valid calls failed to type-check | `tsc` errors; regenerated with `openapi-typescript --default-non-nullable false` |
 | 2026-10-29 | My Tasks grouped by the user's timezone | Used `zoneinfo` without `tzdata`, which works on Linux but has no timezone data on Windows, so "Asia/Manila" failed to load | Checked `ZoneInfo("Asia/Manila")` on the dev machine before relying on it; added `tzdata` |
+| 2026-10-29 | Comments and notifications | Relied on Postgres `now()` for `created_at`, which is the *transaction* start time, so rows written in one request (a comment and its notifications) tied and came back in random order | A notification-order test failed intermittently; timestamps are now set in Python, with the DB default as a fallback |

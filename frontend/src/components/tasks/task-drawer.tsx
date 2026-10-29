@@ -1,9 +1,11 @@
 "use client";
 
-import { TagIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, TagIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { CommentThread } from "@/components/comments/comment-thread";
+import { Markdown } from "@/components/markdown";
 import { ErrorState } from "@/components/states";
 import { AddTaskInput } from "@/components/tasks/add-task-input";
 import { Button } from "@/components/ui/button";
@@ -301,6 +303,13 @@ function TaskDetails({
         <Subtasks task={task} canEdit={canEdit} onOpenTask={onOpenTask} />
       )}
 
+      <CommentThread
+        taskId={task.id}
+        members={members.data ?? []}
+        currentUserId={me.data?.id}
+        canComment={project.archived_at === null}
+      />
+
       <Activity taskId={task.id} memberNames={memberNames} />
 
       {canEdit && canDeleteTask(workspace, task, me.data?.id) && (
@@ -348,31 +357,69 @@ function DescriptionField({
   canEdit: boolean;
   onSave: (description: string | null) => void;
 }) {
+  const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(description ?? "");
-  if (!canEdit) {
+
+  if (editing) {
+    const save = () => {
+      const next = value.trim() || null;
+      if (next !== description) onSave(next);
+      setEditing(false);
+    };
     return (
       <section className="grid gap-2">
-        <h3 className="text-sm font-medium">Description</h3>
-        <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-          {description || "No description."}
-        </p>
+        <Label htmlFor="task-description">Description</Label>
+        <Textarea
+          id="task-description"
+          rows={6}
+          autoFocus
+          value={value}
+          placeholder="Add details, links or a checklist. Markdown is supported."
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) save();
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setValue(description ?? "");
+              setEditing(false);
+            }
+          }}
+        />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={save}>
+            Save
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue(description ?? "");
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </div>
       </section>
     );
   }
+
   return (
     <section className="grid gap-2">
-      <Label htmlFor="task-description">Description</Label>
-      <Textarea
-        id="task-description"
-        rows={4}
-        value={value}
-        placeholder="Add details, links or acceptance criteria (markdown supported)"
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={() => {
-          const next = value.trim() || null;
-          if (next !== description) onSave(next);
-        }}
-      />
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Description</h3>
+        {canEdit && (
+          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            <PencilIcon />
+            {description ? "Edit" : "Add"}
+          </Button>
+        )}
+      </div>
+      {description ? (
+        <Markdown>{description}</Markdown>
+      ) : (
+        <p className="text-sm text-muted-foreground">No description.</p>
+      )}
     </section>
   );
 }
