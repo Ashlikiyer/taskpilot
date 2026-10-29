@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     refresh_token_days: int = 14
     invite_days: int = 7
     ai_daily_limit_per_user: int = 50
+    # Without a key the app still runs; AI endpoints answer 502 AI_UNAVAILABLE.
+    groq_api_key: SecretStr | None = None
+    ai_model: str = "openai/gpt-oss-20b"
+    ai_timeout_seconds: float = 20.0
     rate_limit_enabled: bool = True
 
 

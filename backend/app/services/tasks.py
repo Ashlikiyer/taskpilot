@@ -218,7 +218,7 @@ async def create(
     ctx: ProjectContext,
     data: TaskCreate,
     *,
-    source: TaskSource = TaskSource.manual,
+    source: TaskSource | None = None,
 ) -> TaskOut:
     await _require_can_edit(db, ctx)
     if data.parent_id is not None:
@@ -239,7 +239,9 @@ async def create(
         assignee_id=data.assignee_id,
         due_date=data.due_date,
         created_by=ctx.workspace.user.id,
-        source=source.value,
+        # Internal callers (intake, import) pass `source`; API clients may only send
+        # manual or ai_quick_add through the schema.
+        source=(source or TaskSource(data.source)).value,
     )
     _apply_status(task, data.status)
     task.position = await _end_of_column(db, task)
