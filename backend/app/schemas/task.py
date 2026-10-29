@@ -5,6 +5,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field, StringConstraints, field_validator
 
 from app.db.models import TaskPriority, TaskStatus
+from app.schemas.project import ProjectOut
 
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=20_000)]
@@ -102,3 +103,19 @@ class ActivityOut(BaseModel):
     old_value: str | None
     new_value: str | None
     created_at: datetime
+
+
+class SearchResults(BaseModel):
+    tasks: list[TaskOut]
+    projects: list[ProjectOut]
+
+
+class MyTasks(BaseModel):
+    """Open tasks assigned to the current user, grouped by due date in their timezone."""
+
+    today: date
+    overdue: list[TaskOut]
+    due_today: list[TaskOut]
+    this_week: list[TaskOut]
+    later: list[TaskOut]
+    no_date: list[TaskOut]

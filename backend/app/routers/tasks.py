@@ -2,15 +2,17 @@ import uuid
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
-from app.core.deps import AnyMember, DbSession, ProjectAccess, TaskAccess
-from app.db.models import TaskPriority, TaskStatus
+from app.core.deps import AnyMember, DbSession, ProjectAccess, TaskAccess, require_role
+from app.db.models import MemberRole, TaskPriority, TaskStatus
 from app.repositories.tasks import TaskFilters
 from app.schemas.task import (
     ActivityOut,
     LabelCreate,
     LabelOut,
+    MyTasks,
+    SearchResults,
     TaskCreate,
     TaskMove,
     TaskOut,
@@ -18,9 +20,14 @@ from app.schemas.task import (
     TaskUpdate,
 )
 from app.services import labels as labels_service
+from app.services import search as search_service
 from app.services import tasks as tasks_service
+from app.services.workspaces import WorkspaceContext
 
 router = APIRouter(tags=["tasks"])
+
+Member = Annotated[WorkspaceContext, Depends(require_role(MemberRole.member))]
+SearchText = Annotated[str, Query(min_length=1, max_length=100)]
 
 
 @router.get("/projects/{project_id}/tasks")
@@ -36,6 +43,9 @@ async def list_tasks(
     parent_id: Annotated[
         uuid.UUID | None, Query(description="List this task's subtasks instead of top-level tasks")
     ] = None,
+    q: Annotated[str | None, Query(max_length=100, description="Search title and description")] = (
+        None
+    ),
     sort: Annotated[str, Query(max_length=20, description="Field, prefix with - for desc")] = (
         "position"
     ),
@@ -50,6 +60,7 @@ async def list_tasks(
         due_from=due_from,
         due_to=due_to,
         parent_id=parent_id,
+        q=q or None,
     )
     return await tasks_service.list_tasks(
         db, ctx, filters, sort=sort, page=page, page_size=page_size
@@ -94,3 +105,13 @@ async def list_labels(db: DbSession, ctx: AnyMember) -> list[LabelOut]:
 @router.post("/workspaces/{ws_id}/labels", status_code=status.HTTP_201_CREATED)
 async def create_label(data: LabelCreate, db: DbSession, ctx: AnyMember) -> LabelOut:
     return await labels_service.create(db, ctx, data)
+
+
+@router.get("/workspaces/{ws_id}/search")
+async def search(q: SearchText, db: DbSession, ctx: AnyMember) -> SearchResults:
+    return await search_service.search(db, ctx, q)
+
+
+@router.get("/workspaces/{ws_id}/my-tasks")
+async def my_tasks(db: DbSession, ctx: Member) -> MyTasks:
+    return await search_service.my_tasks(db, ctx)

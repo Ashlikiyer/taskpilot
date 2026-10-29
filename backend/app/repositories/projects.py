@@ -76,3 +76,20 @@ async def remove_user_from_workspace_projects(
             ProjectMember.user_id == user_id, ProjectMember.project_id.in_(workspace_projects)
         )
     )
+
+
+async def search_by_name(
+    db: AsyncSession, workspace_id: uuid.UUID, text: str, *, limit: int
+) -> list[Project]:
+    """Projects whose name contains the text, archived ones included."""
+    escaped = text.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
+    result = await db.execute(
+        select(Project)
+        .where(
+            Project.workspace_id == workspace_id,
+            Project.name.ilike(f"%{escaped}%", escape="\\"),
+        )
+        .order_by(Project.archived_at.is_not(None), Project.name)
+        .limit(limit)
+    )
+    return list(result.scalars())
