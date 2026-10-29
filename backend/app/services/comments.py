@@ -33,6 +33,12 @@ def _to_out(comment: Comment, author_name: str | None) -> CommentOut:
     )
 
 
+def _clear_summary(ctx: TaskContext) -> None:
+    """The F8 summary describes the thread, so any comment change makes it stale."""
+    ctx.task.summary = None
+    ctx.task.summary_updated_at = None
+
+
 def _require_active_project(ctx: TaskContext) -> None:
     if ctx.project.project.archived_at is not None:
         raise ConflictError("This project is archived. Restore it to add or change comments.")
@@ -68,6 +74,7 @@ async def create(db: AsyncSession, ctx: TaskContext, data: CommentCreate) -> Com
     task = ctx.task
     slug = ctx.project.workspace.workspace.slug
     comment = await comments_repo.create(db, task_id=task.id, author_id=author.id, body=data.body)
+    _clear_summary(ctx)
 
     preview = mentions.excerpt(data.body)
     extra = {"comment_id": str(comment.id), "excerpt": preview}
@@ -110,6 +117,7 @@ async def update(db: AsyncSession, ctx: CommentContext, data: CommentUpdate) -> 
         )
         comment.body = data.body
         comment.edited_at = datetime.now(UTC)
+        _clear_summary(ctx.task)
         await notifications_service.notify(
             db,
             newly_mentioned,
@@ -129,4 +137,5 @@ async def delete(db: AsyncSession, ctx: CommentContext) -> None:
     _require_author(ctx)
     _require_active_project(ctx.task)
     await comments_repo.delete_comment(db, ctx.comment)
+    _clear_summary(ctx.task)
     await db.commit()

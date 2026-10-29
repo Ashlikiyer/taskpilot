@@ -2,9 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.core.deps import AI, DbSession, require_role
+from app.core.deps import AI, DbSession, TaskAccess, require_role
 from app.db.models import MemberRole
-from app.schemas.ai import QuickAddDraft, QuickAddRequest
+from app.schemas.ai import (
+    QuickAddDraft,
+    QuickAddRequest,
+    SubtaskSuggestions,
+    ThreadSummaryOut,
+)
 from app.services.ai import features
 from app.services.workspaces import WorkspaceContext
 
@@ -19,3 +24,15 @@ async def quick_add(
 ) -> QuickAddDraft:
     """Draft a task from a sentence. Nothing is saved until the user confirms."""
     return await features.quick_add(db, ctx, provider, data)
+
+
+@router.post("/tasks/{task_id}/ai/subtasks")
+async def suggest_subtasks(db: DbSession, ctx: TaskAccess, provider: AI) -> SubtaskSuggestions:
+    """Suggest 3-8 subtasks. Nothing is saved; the user ticks which ones to create."""
+    return await features.suggest_subtasks(db, ctx, provider)
+
+
+@router.post("/tasks/{task_id}/ai/summary")
+async def summarize_thread(db: DbSession, ctx: TaskAccess, provider: AI) -> ThreadSummaryOut:
+    """Decisions, open questions and next steps from a thread of more than 5 comments."""
+    return await features.summarize_thread(db, ctx, provider)
