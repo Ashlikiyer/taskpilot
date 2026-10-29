@@ -10,6 +10,7 @@ from app.db.models import (
     ActivityLog,
     Label,
     MemberRole,
+    NotificationType,
     Task,
     TaskSource,
     TaskStatus,
@@ -30,6 +31,7 @@ from app.schemas.task import (
     TaskPage,
     TaskUpdate,
 )
+from app.services import notifications as notifications_service
 from app.services import positions
 from app.services import projects as projects_service
 from app.services.projects import ProjectContext
@@ -170,6 +172,18 @@ async def _end_of_column(db: AsyncSession, task: Task) -> float:
     return positions.between(last, None) or positions.GAP
 
 
+async def _notify_assignee(db: AsyncSession, ctx: ProjectContext, task: Task) -> None:
+    """Tell the new assignee, unless they assigned the task to themselves."""
+    await notifications_service.notify(
+        db,
+        [task.assignee_id],
+        type=NotificationType.assigned,
+        task=task,
+        workspace_slug=ctx.workspace.workspace.slug,
+        actor=ctx.workspace.user,
+    )
+
+
 async def get_context(db: AsyncSession, task_id: uuid.UUID, user: User) -> TaskContext:
     """Resolve a task through its project and workspace; outsiders get 404."""
     task = await tasks_repo.get_by_id(db, task_id)
@@ -233,6 +247,7 @@ async def create(
     if labels:
         await labels_repo.set_task_labels(db, task.id, {label.id for label in labels})
     await activity_repo.add(db, [_entry(ctx, task.id, "created", new_value=task.title)])
+    await _notify_assignee(db, ctx, task)
     await db.commit()
     return await _to_out(db, task)
 
@@ -293,6 +308,8 @@ async def update(db: AsyncSession, ctx: TaskContext, data: TaskUpdate) -> TaskOu
 
     if entries:
         await activity_repo.add(db, entries)
+        if any(entry.field == "assignee_id" for entry in entries):
+            await _notify_assignee(db, ctx.project, task)
         await db.commit()
     return await _to_out(db, task)
 

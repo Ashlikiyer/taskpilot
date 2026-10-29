@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationBell } from "@/components/notification-bell";
 import { EmptyState, ErrorState } from "@/components/states";
 import { TaskDrawer } from "@/components/tasks/task-drawer";
 import { buttonVariants } from "@/components/ui/button";
@@ -51,7 +52,12 @@ export default function WorkspaceLayout({
   return (
     <div className="flex flex-1 flex-col md:flex-row">
       <AppSidebar workspace={workspace} workspaces={data} />
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-12 items-center justify-end border-b px-4 md:px-8">
+          <NotificationBell />
+        </header>
+        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+      </div>
       <TaskDrawer workspace={workspace} />
     </div>
   );

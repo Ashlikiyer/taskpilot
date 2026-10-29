@@ -11,9 +11,11 @@ from app.core.security import decode_access_token
 from app.db.models import MemberRole, User
 from app.db.session import SessionLocal
 from app.repositories import users as users_repo
+from app.services import comments as comments_service
 from app.services import projects as projects_service
 from app.services import tasks as tasks_service
 from app.services import workspaces as workspaces_service
+from app.services.comments import CommentContext
 from app.services.projects import ProjectContext
 from app.services.tasks import TaskContext
 from app.services.workspaces import WorkspaceContext
@@ -67,6 +69,15 @@ async def get_task_context(task_id: uuid.UUID, db: DbSession, user: CurrentUser)
 
 
 TaskAccess = Annotated[TaskContext, Depends(get_task_context)]
+
+
+async def get_comment_context(
+    comment_id: uuid.UUID, db: DbSession, user: CurrentUser
+) -> CommentContext:
+    return await comments_service.get_context(db, comment_id, user)
+
+
+CommentAccess = Annotated[CommentContext, Depends(get_comment_context)]
 
 
 def require_role(min_role: MemberRole) -> Callable[..., Awaitable[WorkspaceContext]]:

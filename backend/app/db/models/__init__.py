@@ -2,6 +2,7 @@
 
 from app.db.models.auth import RefreshToken
 from app.db.models.base import Base
+from app.db.models.comment import Comment, Notification, NotificationType
 from app.db.models.project import Project, ProjectMember
 from app.db.models.task import (
     ActivityLog,
@@ -18,9 +19,12 @@ from app.db.models.workspace import Invite, MemberRole, Workspace, WorkspaceMemb
 __all__ = [
     "ActivityLog",
     "Base",
+    "Comment",
     "Invite",
     "Label",
     "MemberRole",
+    "Notification",
+    "NotificationType",
     "Project",
     "ProjectMember",
     "RefreshToken",
