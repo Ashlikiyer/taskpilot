@@ -67,6 +67,13 @@ cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy
 cd frontend && npm run lint && npm run typecheck && npm test
 ```
 
+AI tests use a fake provider, so they are free and repeatable. To check the prompts against the
+real model (uses your Groq quota), set `GROQ_API_KEY` in `backend/.env` and run:
+
+```bash
+cd backend && uv run pytest -m live_ai -s
+```
+
 CI runs the same checks on every pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Roadmap
@@ -78,7 +85,10 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
   - [x] F3: tasks, subtasks, labels, fractional ordering and activity log
   - [x] F4: Kanban board (drag and drop, keyboard accessible), list view with filters, My Tasks, Ctrl/Cmd+K search
   - [x] F5: markdown comments with @mentions, in-app notifications and unread bell
-- [ ] Phase 2: AI quick-add, subtask breakdown, thread summary, daily digest
+- [ ] Phase 2: AI features
+  - [x] AI module (Groq behind a provider interface, validated JSON, usage log, daily limit) and F6 quick-add
+  - [ ] F7 subtask breakdown, F8 thread summary
+  - [ ] F9 daily digest
 - [ ] Phase 3: email/form intake, smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
 

@@ -103,6 +103,21 @@ export function useCreateTask(projectId: string) {
   });
 }
 
+/** Create a task in a project chosen at call time (the quick-add preview can switch projects). */
+export function useCreateTaskIn() {
+  const sync = useSyncTask();
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      data,
+    }: {
+      projectId: string;
+      data: Schemas["TaskCreate"];
+    }) => api.post<Task>(`/projects/${projectId}/tasks`, data),
+    onSuccess: sync,
+  });
+}
+
 export function useUpdateTask(taskId: string) {
   const queryClient = useQueryClient();
   const sync = useSyncTask();

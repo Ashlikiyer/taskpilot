@@ -492,6 +492,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws_id}/ai/quick-add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Quick Add
+         * @description Draft a task from a sentence. Nothing is saved until the user confirms.
+         */
+        post: operations["quick_add_api_v1_workspaces__ws_id__ai_quick_add_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -784,6 +804,45 @@ export interface components {
             /** Member Ids */
             member_ids?: string[] | null;
         };
+        /**
+         * QuickAddDraft
+         * @description The spec's F6 model. Used both to validate the AI reply and as the API response.
+         */
+        QuickAddDraft: {
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /** Assignee Id */
+            assignee_id?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /**
+             * Priority
+             * @default medium
+             * @enum {string}
+             */
+            priority?: "low" | "medium" | "high" | "urgent";
+            /**
+             * Labels
+             * @default []
+             */
+            labels?: string[];
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings?: string[];
+        };
+        /** QuickAddRequest */
+        QuickAddRequest: {
+            /** Text */
+            text: string;
+            /** Default Project Id */
+            default_project_id?: string | null;
+        };
         /** RegisterRequest */
         RegisterRequest: {
             /** Name */
@@ -824,6 +883,12 @@ export interface components {
             label_ids?: string[];
             /** Parent Id */
             parent_id?: string | null;
+            /**
+             * Source
+             * @default manual
+             * @enum {string}
+             */
+            source?: "manual" | "ai_quick_add";
         };
         /**
          * TaskMove
@@ -2253,6 +2318,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NotificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    quick_add_api_v1_workspaces__ws_id__ai_quick_add_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickAddRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickAddDraft"];
                 };
             };
             /** @description Validation Error */

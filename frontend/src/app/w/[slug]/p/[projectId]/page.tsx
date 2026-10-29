@@ -1,7 +1,7 @@
 "use client";
 
+import { QuickAddBar } from "@/components/ai/quick-add-bar";
 import { TaskBoard } from "@/components/board/task-board";
-import { AddTaskInput } from "@/components/tasks/add-task-input";
 import { useMe } from "@/hooks/use-auth";
 import { useCurrentProject } from "@/hooks/use-projects";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
@@ -19,8 +19,8 @@ export default function ProjectBoardPage() {
   return (
     <div className="grid gap-4">
       {canEdit && (
-        <div className="max-w-xl">
-          <AddTaskInput projectId={project.data.id} />
+        <div className="max-w-3xl">
+          <QuickAddBar workspace={workspace} project={project.data} />
         </div>
       )}
       <TaskBoard
