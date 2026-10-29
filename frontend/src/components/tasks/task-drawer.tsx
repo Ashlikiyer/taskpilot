@@ -4,6 +4,7 @@ import { PencilIcon, TagIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { SubtaskBreakdown } from "@/components/ai/subtask-breakdown";
 import { CommentThread } from "@/components/comments/comment-thread";
 import { Markdown } from "@/components/markdown";
 import { ErrorState } from "@/components/states";
@@ -308,6 +309,7 @@ function TaskDetails({
         members={members.data ?? []}
         currentUserId={me.data?.id}
         canComment={project.archived_at === null}
+        canUseAI={workspace.role !== "viewer"}
       />
 
       <Activity taskId={task.id} memberNames={memberNames} />
@@ -584,11 +586,14 @@ function Subtasks({
         ))}
       </ul>
       {canEdit && (
-        <AddTaskInput
-          projectId={task.project_id}
-          parentId={task.id}
-          placeholder="Add a subtask"
-        />
+        <>
+          <AddTaskInput
+            projectId={task.project_id}
+            parentId={task.id}
+            placeholder="Add a subtask"
+          />
+          <SubtaskBreakdown taskId={task.id} projectId={task.project_id} />
+        </>
       )}
     </section>
   );
