@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,11 +10,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/taskpilot"
+    jwt_secret: SecretStr = Field(min_length=32)
     frontend_origin: str = "http://localhost:3000"
     app_timezone: str = "Asia/Manila"
     access_token_minutes: int = 15
     refresh_token_days: int = 14
+    invite_days: int = 7
     ai_daily_limit_per_user: int = 50
+    rate_limit_enabled: bool = True
 
 
 @lru_cache

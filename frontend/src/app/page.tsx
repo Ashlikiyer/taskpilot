@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { BackendStatus } from "@/components/backend-status";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -9,6 +12,17 @@ export default function Home() {
         sentences, get a daily digest of overdue work, and turn emails and
         spreadsheets into tasks automatically.
       </p>
+      <div className="flex flex-wrap gap-3">
+        <Link href="/register" className={buttonVariants({ size: "lg" })}>
+          Get started
+        </Link>
+        <Link
+          href="/login"
+          className={buttonVariants({ size: "lg", variant: "outline" })}
+        >
+          Log in
+        </Link>
+      </div>
       <BackendStatus />
     </main>
   );
