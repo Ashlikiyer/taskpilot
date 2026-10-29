@@ -1,21 +1,17 @@
-import logging
 from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Literal
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.db.models import Task
 from app.repositories import projects as projects_repo
 from app.repositories import tasks as tasks_repo
 from app.schemas.task import MyTasks, SearchResults
 from app.services import projects as projects_service
 from app.services import tasks as tasks_service
+from app.services.dates import user_today
 from app.services.workspaces import WorkspaceContext
-
-logger = logging.getLogger(__name__)
 
 TASK_RESULTS = 20
 PROJECT_RESULTS = 10
@@ -33,15 +29,6 @@ async def search(db: AsyncSession, ctx: WorkspaceContext, text: str) -> SearchRe
         tasks=await tasks_service.to_outs(db, tasks),
         projects=await projects_service.to_outs(db, projects),
     )
-
-
-def user_today(timezone: str, now: datetime | None = None) -> date:
-    try:
-        zone = ZoneInfo(timezone)
-    except ZoneInfoNotFoundError, ValueError:
-        logger.warning("Unknown timezone %r, using the app default", timezone)
-        zone = ZoneInfo(get_settings().app_timezone)
-    return (now or datetime.now(UTC)).astimezone(zone).date()
 
 
 def due_group(due: date | None, today: date) -> DueGroup:
