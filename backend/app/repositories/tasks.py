@@ -194,3 +194,18 @@ async def assigned_to_user(
         .order_by(Task.due_date.asc().nulls_last(), Task.priority.desc(), Task.position)
     )
     return list(result.scalars())
+
+
+async def titles_and_due_dates(
+    db: AsyncSession, project_id: uuid.UUID
+) -> set[tuple[str, date | None]]:
+    """(lowercase title, due date) for every task in the project, for duplicate checks."""
+    result = await db.execute(
+        select(func.lower(Task.title), Task.due_date).where(Task.project_id == project_id)
+    )
+    return {(title, due) for title, due in result.all()}
+
+
+async def add_many(db: AsyncSession, tasks: list[Task]) -> None:
+    db.add_all(tasks)
+    await db.flush()

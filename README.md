@@ -86,6 +86,23 @@ Turn on the request form for a project in **Workspace settings** and share the l
 (`/intake/<random-code>`). Anyone can submit without logging in; submissions are limited to 10
 per hour per IP address.
 
+## Smart import
+
+Admins can import tasks from a `.csv` or `.xlsx` export of another tool (up to 5 MB, 2,000 rows
+and 50 columns) under **Import** in the sidebar:
+
+1. **Upload** the file and pick the sheet.
+2. **Map** columns to task fields. The AI suggests a mapping from the headers and the first 10
+   rows only; well-known values (`WIP`, `Closed`, `P1`…) always get their standard meaning, and
+   the date format is inferred from the column if the AI gives none. Everything can be changed.
+3. **Preview** every row with its warnings (unknown status, assignee not in the project, bad
+   date…) and errors (missing title, duplicate when duplicates are not allowed).
+4. **Run**: all valid rows are added in one transaction, so either everything is imported or
+   nothing is. Skipped rows can be downloaded as a CSV to fix and upload again.
+
+Assignees are matched in code (email, then full name, then a unique first name), never by the
+AI. A messy sample file is in [`scripts/samples/messy_tasks.xlsx`](scripts/samples/messy_tasks.xlsx).
+
 ## Checks
 
 ```bash
@@ -115,9 +132,9 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
   - [x] AI module (Groq behind a provider interface, validated JSON, usage log, daily limit) and F6 quick-add
   - [x] F7 subtask breakdown, F8 thread summary (cached until the comments change)
   - [x] F9 daily digest (8:00 AM PHT via GitHub Actions; due-tomorrow notifications)
-- [ ] Phase 3: automation and data
+- [x] Phase 3: automation and data
   - [x] F10 email (Gmail label + Apps Script) and public form intake into a project Inbox
-  - [ ] F11 smart CSV/Excel import
+  - [x] F11 smart CSV/Excel import (AI column mapping, preview with row warnings, all-or-nothing run)
 - [ ] Phase 4: dashboard, responsive polish, deployment
 
 ## AI log
@@ -136,3 +153,7 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | Comments and notifications | Relied on Postgres `now()` for `created_at`, which is the *transaction* start time, so rows written in one request (a comment and its notifications) tied and came back in random order | A notification-order test failed intermittently; timestamps are now set in Python, with the DB default as a fallback |
 | 2026-10-29 | Digest summary word limit | Enforced the 60-word limit in Pydantic's `model_post_init`, where errors are raised as plain `ValueError` instead of `ValidationError`, so a too-long AI reply would crash instead of being retried | Code review before running; moved to a `model_validator` and tested with an 80-word reply |
 | 2026-10-29 | Public request form and auth pages | Used shadcn's `CardTitle` as the page title, but it renders a `<div>`, so those pages had no heading for screen readers | A Testing Library query for the heading failed; titles are now real `<h1>` elements |
+| 2026-10-30 | Import parsing | Dropped blank rows before numbering, so warnings pointed at the wrong spreadsheet row | A test with blank rows in the sample file checked the reported row numbers; the original row numbers are now stored with the rows |
+| 2026-10-30 | AI column mapping for imports | The live model mapped `P2` to Medium and `P3` to High, and gave no date format for `11/05/2026` | The live AI test against the sample file; well-known values now override the AI and the date format is inferred in code |
+| 2026-10-30 | Skipped-rows CSV download | Prettier turned the `"\uFEFF"` escape into an invisible literal BOM in the source | Noticed in the diff; the BOM is now built with `String.fromCharCode(0xfeff)` |
+| 2026-10-30 | Local end-to-end test | An orphaned `fastapi dev` worker kept serving old code on port 8000, so a fix looked like it didn't work | Two listeners showed in `netstat`; stopped the orphan and re-ran |

@@ -693,6 +693,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws_id}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Import
+         * @description Step 1: upload. Admins only. Pick an Excel sheet with `sheet` (default: the first).
+         */
+        post: operations["upload_import_api_v1_workspaces__ws_id__imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import_api_v1_imports__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Mapping
+         * @description Step 2: the user confirms or edits the mapping.
+         */
+        put: operations["set_mapping_api_v1_imports__job_id__mapping_put"];
+        /**
+         * Suggest Mapping
+         * @description Step 2: the AI suggests a column and value mapping from the headers and first 10 rows.
+         */
+        post: operations["suggest_mapping_api_v1_imports__job_id__mapping_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Import
+         * @description Step 3: dry run. Checks every row; nothing is saved.
+         */
+        post: operations["preview_import_api_v1_imports__job_id__preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Import
+         * @description Step 4: import valid rows into the project in one transaction (all or nothing).
+         */
+        post: operations["run_import_api_v1_imports__job_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -723,6 +824,16 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Body_upload_import_api_v1_workspaces__ws_id__imports_post */
+        Body_upload_import_api_v1_workspaces__ws_id__imports_post: {
+            /**
+             * File
+             * @description .csv or .xlsx, max 5 MB, 2,000 rows
+             */
+            file: string;
+            /** Sheet */
+            sheet?: string | null;
         };
         /** CommentCreate */
         CommentCreate: {
@@ -895,6 +1006,99 @@ export interface components {
              * @enum {string}
              */
             database: "ok" | "unavailable";
+        };
+        /** ImportJobOut */
+        ImportJobOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /** Project Id */
+            project_id: string | null;
+            /** File Name */
+            file_name: string;
+            /** Sheet Name */
+            sheet_name: string | null;
+            /** Sheet Names */
+            sheet_names: string[];
+            /** Headers */
+            headers: string[];
+            /** Sample Rows */
+            sample_rows: (string | null)[][];
+            /** Column Values */
+            column_values: {
+                [key: string]: string[];
+            };
+            /** Total Rows */
+            total_rows: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "uploaded" | "mapped" | "previewed" | "imported" | "failed";
+            mapping: components["schemas"]["ImportMapping"] | null;
+            /** Imported Rows */
+            imported_rows: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * ImportMapping
+         * @description The spec's F11 model: which column is which field, how to translate status and
+         *     priority values, and the date format. Suggested by the AI, editable by the user.
+         */
+        ImportMapping: {
+            /** Columns */
+            columns: {
+                [key: string]: "title" | "description" | "status" | "priority" | "assignee" | "due_date" | "labels" | "ignore";
+            };
+            /**
+             * Status Values
+             * @default {}
+             */
+            status_values?: {
+                [key: string]: "todo" | "in_progress" | "in_review" | "done";
+            };
+            /**
+             * Priority Values
+             * @default {}
+             */
+            priority_values?: {
+                [key: string]: "low" | "medium" | "high" | "urgent";
+            };
+            /** Date Format */
+            date_format?: string | null;
+        };
+        /** ImportOptions */
+        ImportOptions: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Allow Duplicates
+             * @default true
+             */
+            allow_duplicates?: boolean;
+        };
+        /** ImportResult */
+        ImportResult: {
+            /** Imported Rows */
+            imported_rows: number;
+            /** Skipped Rows */
+            skipped_rows: components["schemas"]["SkippedRow"][];
+            /** Labels Created */
+            labels_created: string[];
         };
         /**
          * IntakeAccept
@@ -1139,6 +1343,48 @@ export interface components {
              */
             created_at: string;
         };
+        /** PreviewResult */
+        PreviewResult: {
+            /** Total Rows */
+            total_rows: number;
+            /** Valid Rows */
+            valid_rows: number;
+            /** Rows With Warnings */
+            rows_with_warnings: number;
+            /** Rows With Errors */
+            rows_with_errors: number;
+            /** New Labels */
+            new_labels: string[];
+            /** Rows */
+            rows: components["schemas"]["PreviewRow"][];
+        };
+        /** PreviewRow */
+        PreviewRow: {
+            /** Row Number */
+            row_number: number;
+            /** Title */
+            title: string | null;
+            /** Description */
+            description: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "todo" | "in_progress" | "in_review" | "done";
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "low" | "medium" | "high" | "urgent";
+            /** Assignee Name */
+            assignee_name: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Labels */
+            labels: string[];
+            /** Issues */
+            issues: components["schemas"]["RowIssue"][];
+        };
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -1261,12 +1507,35 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** RowIssue */
+        RowIssue: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "error" | "warning" | "info";
+            /** Field */
+            field: string;
+            /** Message */
+            message: string;
+        };
         /** SearchResults */
         SearchResults: {
             /** Tasks */
             tasks: components["schemas"]["TaskOut"][];
             /** Projects */
             projects: components["schemas"]["ProjectOut"][];
+        };
+        /** SkippedRow */
+        SkippedRow: {
+            /** Row Number */
+            row_number: number;
+            /** Values */
+            values: {
+                [key: string]: string | null;
+            };
+            /** Reasons */
+            reasons: string[];
         };
         /**
          * SubtaskSuggestions
@@ -3109,6 +3378,208 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntakeItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_import_api_v1_workspaces__ws_id__imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_import_api_v1_workspaces__ws_id__imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import_api_v1_imports__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_mapping_api_v1_imports__job_id__mapping_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportMapping"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_mapping_api_v1_imports__job_id__mapping_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_import_api_v1_imports__job_id__preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportOptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_import_api_v1_imports__job_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportOptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
                 };
             };
             /** @description Validation Error */

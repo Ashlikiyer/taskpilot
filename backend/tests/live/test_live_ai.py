@@ -191,3 +191,35 @@ async def test_intake_email_against_the_real_model(
     assert item["confidence"] > 0.5
     assert "form" in item["draft"]["title"].lower()
     assert item["draft"]["assignee_id"] is None
+
+
+async def test_import_mapping_against_the_real_model(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from tests.api.test_imports_mapping import SAMPLE, XLSX
+
+    owner = await create_user(db_session, email="owner@example.com", name="Olive Reyes")
+    workspace = await create_workspace(db_session, owner)
+    job = (
+        await client.post(
+            f"/api/v1/workspaces/{workspace.id}/imports",
+            files={"file": ("messy_tasks.xlsx", SAMPLE.read_bytes(), XLSX)},
+            headers=auth_headers(owner),
+        )
+    ).json()
+
+    response = await client.post(
+        f"/api/v1/imports/{job['id']}/mapping", headers=auth_headers(owner)
+    )
+
+    assert response.status_code == 200, response.text
+    mapping = response.json()["mapping"]
+    print("\nLIVE MAPPING:", mapping)
+    columns = mapping["columns"]
+    assert columns["Task Name"] == "title"
+    assert columns["State"] == "status"
+    assert columns["Owner"] == "assignee"
+    assert columns["Deadline"] == "due_date"
+    assert mapping["status_values"]["WIP"] == "in_progress"
+    assert mapping["status_values"]["Closed"] == "done"
+    assert mapping["priority_values"]["P1"] == "urgent"
