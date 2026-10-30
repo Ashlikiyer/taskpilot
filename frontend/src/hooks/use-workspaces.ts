@@ -88,3 +88,13 @@ export function useAcceptInvite() {
       queryClient.invalidateQueries({ queryKey: workspaceKeys.all }),
   });
 }
+
+export function useRenameWorkspace(wsId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.patch<Workspace>(`/workspaces/${wsId}`, { name }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.all }),
+  });
+}

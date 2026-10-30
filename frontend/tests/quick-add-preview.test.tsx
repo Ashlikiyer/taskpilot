@@ -16,6 +16,10 @@ const project = (
   color: "#6366f1",
   archived_at: null,
   member_ids,
+  intake_email_label: null,
+  intake_form_enabled: false,
+  intake_slug: null,
+  intake_pending: 0,
   created_at: "2026-10-29T00:00:00Z",
 });
 

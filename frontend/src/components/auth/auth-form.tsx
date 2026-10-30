@@ -75,8 +75,11 @@ export function AuthForm(props: Props) {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle className="text-xl">
-          {isRegister ? "Create your account" : "Log in to TaskPilot"}
+        <CardTitle>
+          {/* CardTitle is a <div>; the page needs a real heading for screen readers. */}
+          <h1 className="text-xl">
+            {isRegister ? "Create your account" : "Log in to TaskPilot"}
+          </h1>
         </CardTitle>
         <CardDescription>
           {isRegister

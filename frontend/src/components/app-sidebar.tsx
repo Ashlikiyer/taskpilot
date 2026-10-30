@@ -5,6 +5,7 @@ import {
   CircleCheckIcon,
   LayoutDashboardIcon,
   PlusIcon,
+  SettingsIcon,
   SunriseIcon,
   UsersIcon,
 } from "lucide-react";
@@ -57,6 +58,9 @@ export function AppSidebar({
           { href: `${base}/digest`, label: "Digest", icon: SunriseIcon },
         ]),
     { href: `${base}/settings/members`, label: "Members", icon: UsersIcon },
+    ...(hasRole(workspace.role, "admin")
+      ? [{ href: `${base}/settings`, label: "Settings", icon: SettingsIcon }]
+      : []),
   ];
 
   return (
@@ -200,6 +204,15 @@ function SidebarProjects({
                     style={{ backgroundColor: project.color }}
                   />
                   <span className="truncate">{project.name}</span>
+                  {canCreate && project.intake_pending > 0 && (
+                    <span
+                      className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground"
+                      title={`${project.intake_pending} pending in the Inbox`}
+                    >
+                      {project.intake_pending}
+                      <span className="sr-only"> pending in the Inbox</span>
+                    </span>
+                  )}
                 </Link>
               </li>
             );
