@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useRefreshAIUsage } from "@/hooks/use-ai";
 import { api, type Schemas } from "@/lib/api/client";
 
 type Job = Schemas["ImportJobOut"];
@@ -31,9 +32,11 @@ export function useUploadImport(wsId: string) {
 /** Step 2: ask the AI for a mapping (headers and first 10 rows only). */
 export function useSuggestMapping(jobId: string) {
   const queryClient = useQueryClient();
+  const refreshUsage = useRefreshAIUsage();
   return useMutation({
     mutationFn: () => api.post<Job>(`/imports/${jobId}/mapping`),
     onSuccess: (job) => queryClient.setQueryData(jobKey(job.id), job),
+    onSettled: refreshUsage,
   });
 }
 

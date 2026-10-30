@@ -5,10 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskDrawer } from "@/components/tasks/task-drawer";
 import { setAccessToken, type Schemas } from "@/lib/api/client";
 
+const search = vi.hoisted(() => ({ value: "task=t1" }));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/w/acme/p/p1",
-  useSearchParams: () => new URLSearchParams("task=t1"),
+  useSearchParams: () => new URLSearchParams(search.value),
 }));
 
 const workspace: Schemas["WorkspaceOut"] = {
@@ -141,6 +143,13 @@ function renderDrawer(role: "owner" | "viewer") {
 
 describe("TaskDrawer", () => {
   beforeEach(() => setAccessToken("token"));
+
+  it("stays closed for an empty ?task= instead of loading forever", () => {
+    search.value = "task=";
+    renderDrawer("owner");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    search.value = "task=t1";
+  });
 
   it("shows subtask progress and the activity history", async () => {
     mockApi();

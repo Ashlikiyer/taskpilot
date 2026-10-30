@@ -1,16 +1,13 @@
-import { CalendarIcon, ListChecksIcon } from "lucide-react";
-
+import { PriorityPill, StatusLabel } from "@/components/task-ui";
 import type { Schemas } from "@/lib/api/client";
-import {
-  formatDueDate,
-  PRIORITY_CLASS,
-  PRIORITY_LABEL,
-  STATUS_LABEL,
-  type Task,
-} from "@/lib/tasks";
+import { formatDueDate, isOverdue, type Task } from "@/lib/tasks";
 import { cn } from "@/lib/utils";
 
-/** A one-line task with its project, used on My Tasks. */
+/** Column template shared by the row and its header (md and up). */
+export const TASK_ROW_COLUMNS =
+  "md:grid md:grid-cols-[28px_minmax(0,1fr)_170px_90px_110px_110px] md:items-center md:gap-0";
+
+/** A one-line task with its project, used on My Tasks. Stacks on small screens. */
 export function TaskRow({
   task,
   project,
@@ -20,47 +17,57 @@ export function TaskRow({
   project: Pick<Schemas["ProjectOut"], "name" | "color"> | undefined;
   onOpen: () => void;
 }) {
+  const late = isOverdue(task);
+  const due = task.due_date ? formatDueDate(task.due_date) : "—";
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className={cn(
+        "flex w-full items-start gap-3 px-[18px] py-3 text-left text-[13px] hover:bg-muted focus-visible:bg-muted focus-visible:outline-none md:h-10 md:px-8 md:py-0",
+        TASK_ROW_COLUMNS,
+      )}
     >
-      <span className="min-w-0 flex-1 basis-48 truncate text-sm">
-        {task.title}
+      <span
+        aria-hidden
+        className="mt-px size-[18px] shrink-0 rounded-full border-[1.5px] border-[#c9c9cc] md:size-3.5"
+      />
+      <span className="grid min-w-0 gap-1 md:block">
+        <span className="block text-sm break-words md:truncate md:pr-3 md:text-[13px]">
+          {task.title}
+        </span>
+        {/* Small screens: due date and project under the title. */}
+        <span className="flex gap-2 text-xs text-[#77777c] md:hidden">
+          <span className={cn(late && "text-overdue")}>{due}</span>·
+          <span className="truncate">{project?.name}</span>
+        </span>
       </span>
-      <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <span className="hidden min-w-0 items-center gap-1.5 text-[12.5px] text-[#55555b] md:flex">
         {project && (
-          <span className="flex max-w-36 items-center gap-1.5">
+          <>
             <span
               aria-hidden
-              className="size-2 shrink-0 rounded-full"
+              className="size-[7px] shrink-0 rounded-full"
               style={{ backgroundColor: project.color }}
             />
             <span className="truncate">{project.name}</span>
-          </span>
+          </>
         )}
-        <span>{STATUS_LABEL[task.status]}</span>
-        {task.subtask_count > 0 && (
-          <span
-            className="flex items-center gap-1"
-            title={`${task.subtasks_done} of ${task.subtask_count} subtasks done`}
-          >
-            <ListChecksIcon className="size-3.5" aria-hidden />
-            {task.subtasks_done}/{task.subtask_count}
-          </span>
+      </span>
+      <span className="hidden md:block">
+        <PriorityPill priority={task.priority} />
+      </span>
+      <span className="hidden text-[12.5px] text-[#55555b] md:block">
+        <StatusLabel status={task.status} />
+      </span>
+      <span
+        className={cn(
+          "hidden text-[12.5px] text-[#55555b] md:block",
+          late && "text-overdue",
         )}
-        {task.due_date && (
-          <span className="flex items-center gap-1">
-            <CalendarIcon className="size-3.5" aria-hidden />
-            {formatDueDate(task.due_date)}
-          </span>
-        )}
-        <span
-          className={cn("rounded px-1.5 py-0.5", PRIORITY_CLASS[task.priority])}
-        >
-          {PRIORITY_LABEL[task.priority]}
-        </span>
+      >
+        {due}
+        {late && <span className="sr-only"> (overdue)</span>}
       </span>
     </button>
   );

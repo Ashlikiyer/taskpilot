@@ -52,13 +52,13 @@ export function CommandMenu({
     <>
       <Button
         variant="outline"
-        className="w-full justify-start text-muted-foreground"
+        className="h-[34px] w-full justify-start gap-2 rounded-[9px] bg-card px-2.5 text-[12.5px] font-normal text-subtle"
         onClick={() => setOpen(true)}
         aria-keyshortcuts="Control+K Meta+K"
       >
         <SearchIcon />
-        Search
-        <kbd className="ml-auto rounded border px-1.5 font-mono text-xs">
+        <span className="flex-1 text-left">Search tasks…</span>
+        <kbd className="rounded border px-1.5 font-mono text-[10.5px]">
           Ctrl K
         </kbd>
       </Button>

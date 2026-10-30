@@ -1,14 +1,25 @@
 "use client";
 
+import { MenuIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
+import { CreateWithAIProvider } from "@/components/ai/create-with-ai";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NotificationBell } from "@/components/notification-bell";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { EmptyState, ErrorState } from "@/components/states";
 import { TaskDrawer } from "@/components/tasks/task-drawer";
-import { buttonVariants } from "@/components/ui/button";
+import { TopBar } from "@/components/top-bar";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
+import type { Schemas } from "@/lib/api/client";
 
 export default function WorkspaceLayout({
   children,
@@ -17,6 +28,7 @@ export default function WorkspaceLayout({
 }) {
   const { workspace, data, isPending, isError, refetch } =
     useCurrentWorkspace();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (isPending) {
     return (
@@ -50,15 +62,81 @@ export default function WorkspaceLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col md:flex-row">
-      <AppSidebar workspace={workspace} workspaces={data} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 items-center justify-end border-b px-4 md:px-8">
-          <NotificationBell />
-        </header>
-        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+    <CreateWithAIProvider workspace={workspace}>
+      <div className="flex min-h-svh flex-1">
+        <AppSidebar
+          workspace={workspace}
+          workspaces={data}
+          className="sticky top-0 hidden h-svh overflow-y-auto md:flex"
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar
+            workspace={workspace}
+            start={
+              <MobileMenu
+                workspace={workspace}
+                workspaces={data}
+                open={menuOpen}
+                onOpenChange={setMenuOpen}
+              />
+            }
+          />
+          {/* Bottom padding keeps content clear of the phone tab bar. */}
+          <main className="min-w-0 flex-1 px-4 pt-5 pb-24 md:px-8 md:py-7">
+            {children}
+          </main>
+        </div>
       </div>
+      <MobileTabBar
+        workspace={workspace}
+        onOpenMenu={() => setMenuOpen(true)}
+      />
       <TaskDrawer workspace={workspace} />
-    </div>
+    </CreateWithAIProvider>
+  );
+}
+
+/** Below the md breakpoint the sidebar opens from a menu button. */
+function MobileMenu({
+  workspace,
+  workspaces,
+  open,
+  onOpenChange: setOpen,
+}: {
+  workspace: Schemas["WorkspaceOut"];
+  workspaces: Schemas["WorkspaceOut"][];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        aria-label="Open menu"
+        onClick={() => setOpen(true)}
+      >
+        <MenuIcon />
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="left"
+          className="w-58 gap-0 p-0"
+          showCloseButton={false}
+        >
+          <SheetTitle className="sr-only">Menu</SheetTitle>
+          <SheetDescription className="sr-only">
+            Workspace pages and projects
+          </SheetDescription>
+          <AppSidebar
+            workspace={workspace}
+            workspaces={workspaces}
+            className="h-full overflow-y-auto border-r-0"
+            onNavigate={() => setOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

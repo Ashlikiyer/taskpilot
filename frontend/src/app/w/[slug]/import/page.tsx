@@ -79,22 +79,48 @@ function ImportWizard({
   const project = projects.data?.find((p) => p.id === projectId);
 
   return (
-    <div className="grid max-w-5xl gap-6">
-      <header className="grid gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Import tasks</h1>
-        <ol className="flex flex-wrap gap-2 text-sm" aria-label="Import steps">
+    <div className="grid max-w-[1100px] gap-5">
+      <header className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="grid min-w-0 flex-1 gap-1">
+          <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
+            Import tasks
+          </h1>
+          <p className="truncate text-[13px] text-muted-foreground">
+            {job.data
+              ? `${job.data.file_name} · ${job.data.total_rows} ${job.data.total_rows === 1 ? "row" : "rows"}${project ? ` · into ${project.name}` : ""}`
+              : "Bring tasks over from a spreadsheet export of another tool."}
+          </p>
+        </div>
+        <ol
+          className="flex flex-wrap items-center gap-2 text-[12.5px]"
+          aria-label="Import steps"
+        >
           {STEPS.map((label, index) => (
             <li
               key={label}
               aria-current={index === step ? "step" : undefined}
               className={cn(
-                "rounded-full border px-3 py-1",
-                index === step &&
-                  "border-primary bg-primary text-primary-foreground",
-                index < step && "text-muted-foreground line-through",
+                "flex items-center gap-1.5 text-subtle",
+                index === step && "font-semibold text-foreground",
+                index < step && "text-status-done",
               )}
             >
-              {index + 1}. {label}
+              {index > 0 && (
+                <span aria-hidden className="mr-0.5 h-px w-6 bg-[#d9d9d5]" />
+              )}
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-[18px] items-center justify-center rounded-full border border-[#d9d9d5] text-[10px]",
+                  index === step &&
+                    "border-primary bg-primary text-primary-foreground",
+                  index < step && "border-transparent bg-[#e3f3ea]",
+                )}
+              >
+                {index < step ? "✓" : index + 1}
+              </span>
+              {label}
+              {index < step && <span className="sr-only"> (done)</span>}
             </li>
           ))}
         </ol>

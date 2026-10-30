@@ -492,6 +492,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws_id}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dashboard
+         * @description Open tasks by status, overdue, completed per week (8 weeks) and workload.
+         */
+        get: operations["get_dashboard_api_v1_workspaces__ws_id__dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Usage
+         * @description How many of today's AI requests the current user has used.
+         */
+        get: operations["ai_usage_api_v1_ai_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws_id}/ai/quick-add": {
         parameters: {
             query?: never;
@@ -798,6 +838,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AIUsageOut
+         * @description The current user's AI calls today; resets at midnight in the app timezone.
+         */
+        AIUsageOut: {
+            /** Used */
+            used: number;
+            /** Limit */
+            limit: number;
+        };
         /** ActivityOut */
         ActivityOut: {
             /**
@@ -870,6 +920,40 @@ export interface components {
         CommentUpdate: {
             /** Body */
             body: string;
+        };
+        /**
+         * DashboardOut
+         * @description Workspace (or one project's) numbers for the dashboard. Top-level tasks in
+         *     active projects only; subtasks are counted through their parent.
+         */
+        DashboardOut: {
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /** Project Id */
+            project_id: string | null;
+            /** Open Total */
+            open_total: number;
+            /** Open Projects */
+            open_projects: number;
+            /** Open By Status */
+            open_by_status: components["schemas"]["StatusCount"][];
+            /** Overdue */
+            overdue: number;
+            /** Overdue Week Ago */
+            overdue_week_ago: number;
+            /** Completed This Week */
+            completed_this_week: number;
+            /** Completed Per Week */
+            completed_per_week: components["schemas"]["WeekCount"][];
+            /** Workload */
+            workload: components["schemas"]["MemberLoad"][];
+            /** Created Recently */
+            created_recently: number;
+            /** Created By Ai */
+            created_by_ai: number;
         };
         /** DigestContent */
         DigestContent: {
@@ -1259,6 +1343,18 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** MemberLoad */
+        MemberLoad: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Name */
+            name: string;
+            /** Open */
+            open: number;
+        };
         /** MemberOut */
         MemberOut: {
             /**
@@ -1537,6 +1633,16 @@ export interface components {
             /** Reasons */
             reasons: string[];
         };
+        /** StatusCount */
+        StatusCount: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "todo" | "in_progress" | "in_review";
+            /** Count */
+            count: number;
+        };
         /**
          * SubtaskSuggestions
          * @description The spec's F7 model: 3 to 8 subtask titles, each at most 120 characters.
@@ -1623,6 +1729,11 @@ export interface components {
             subtask_count: number;
             /** Subtasks Done */
             subtasks_done: number;
+            /**
+             * Comment Count
+             * @default 0
+             */
+            comment_count?: number;
             /**
              * Created At
              * Format: date-time
@@ -1730,6 +1841,16 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WeekCount */
+        WeekCount: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Count */
+            count: number;
         };
         /** WorkspaceCreate */
         WorkspaceCreate: {
@@ -3026,6 +3147,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dashboard_api_v1_workspaces__ws_id__dashboard_get: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+            };
+            header?: never;
+            path: {
+                ws_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_usage_api_v1_ai_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIUsageOut"];
                 };
             };
         };

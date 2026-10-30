@@ -91,7 +91,7 @@ describe("QuickAddPreview", () => {
       target: { value: "  Send the Acme invoice today " },
     });
     fireEvent.click(screen.getByRole("checkbox", { name: "Client" }));
-    fireEvent.click(screen.getByRole("button", { name: "Create task" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm & create" }));
 
     expect(onConfirm).toHaveBeenCalledWith({
       projectId: "p-web",
@@ -110,7 +110,7 @@ describe("QuickAddPreview", () => {
   it("asks for a project when the AI couldn't pick one", () => {
     const onConfirm = renderPreview({ title: "Call the bank" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Create task" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm & create" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("Choose a project");
     expect(onConfirm).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe("QuickAddPreview", () => {
     });
 
     expect(screen.getByText("Not on this project.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Create task" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm & create" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "isn't on this project",

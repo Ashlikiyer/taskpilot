@@ -7,14 +7,6 @@ import { z } from "zod";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -73,73 +65,73 @@ export function AuthForm(props: Props) {
   }`;
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>
-          {/* CardTitle is a <div>; the page needs a real heading for screen readers. */}
-          <h1 className="text-xl">
-            {isRegister ? "Create your account" : "Log in to TaskPilot"}
-          </h1>
-        </CardTitle>
-        <CardDescription>
+    <div className="grid gap-5">
+      <div className="grid gap-1.5">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
+          {isRegister ? "Create your account" : "Welcome back"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
           {isRegister
             ? "Start managing your team's work in minutes."
-            : "Welcome back. Enter your details to continue."}
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={submit} noValidate>
-        <CardContent className="grid gap-4">
-          {props.error && (
-            <Alert variant="destructive">
-              <AlertDescription>{props.error}</AlertDescription>
-            </Alert>
-          )}
-          {isRegister && (
-            <Field label="Name" id="name" error={errors.name?.message}>
-              <Input id="name" autoComplete="name" {...register("name")} />
-            </Field>
-          )}
-          <Field label="Email" id="email" error={errors.email?.message}>
+            : "Log in to your workspace."}
+        </p>
+      </div>
+      <form onSubmit={submit} noValidate className="grid gap-5">
+        {props.error && (
+          <Alert variant="destructive">
+            <AlertDescription>{props.error}</AlertDescription>
+          </Alert>
+        )}
+        {isRegister && (
+          <Field label="Name" id="name" error={errors.name?.message}>
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register("email")}
+              id="name"
+              autoComplete="name"
+              className="h-10"
+              {...register("name")}
             />
           </Field>
-          <Field
-            label="Password"
+        )}
+        <Field label="Email" id="email" error={errors.email?.message}>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className="h-10"
+            {...register("email")}
+          />
+        </Field>
+        <Field label="Password" id="password" error={errors.password?.message}>
+          <Input
             id="password"
-            error={errors.password?.message}
-          >
-            <Input
-              id="password"
-              type="password"
-              autoComplete={isRegister ? "new-password" : "current-password"}
-              {...register("password")}
-            />
-          </Field>
-        </CardContent>
-        <CardFooter className="mt-6 flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Please wait…"
-              : isRegister
-                ? "Create account"
-                : "Log in"}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            {isRegister ? "Already have an account? " : "New to TaskPilot? "}
-            <Link
-              href={switchHref}
-              className="font-medium text-foreground underline"
-            >
-              {isRegister ? "Log in" : "Create an account"}
-            </Link>
-          </p>
-        </CardFooter>
+            type="password"
+            autoComplete={isRegister ? "new-password" : "current-password"}
+            className="h-10"
+            {...register("password")}
+          />
+        </Field>
+        <Button
+          type="submit"
+          className="h-[42px] w-full text-sm"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? "Please wait…"
+            : isRegister
+              ? "Create account"
+              : "Log in"}
+        </Button>
       </form>
-    </Card>
+      <p className="text-[13px] text-muted-foreground">
+        {isRegister ? "Already have an account? " : "No account? "}
+        <Link
+          href={switchHref}
+          className="font-medium text-ai hover:text-[#4a32b0] hover:underline"
+        >
+          {isRegister ? "Log in" : "Create one"}
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -155,8 +147,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
+    <div className="grid gap-1.5">
+      <Label htmlFor={id} className="text-[12.5px]">
+        {label}
+      </Label>
       {children}
       {error && (
         <p role="alert" className="text-sm text-destructive">

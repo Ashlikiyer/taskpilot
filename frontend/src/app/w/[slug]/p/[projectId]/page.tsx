@@ -18,11 +18,7 @@ export default function ProjectBoardPage() {
 
   return (
     <div className="grid gap-4">
-      {canEdit && (
-        <div className="max-w-3xl">
-          <QuickAddBar workspace={workspace} project={project.data} />
-        </div>
-      )}
+      {canEdit && <QuickAddBar workspace={workspace} project={project.data} />}
       <TaskBoard
         workspace={workspace}
         project={project.data}

@@ -23,6 +23,7 @@ import {
   TARGETS,
 } from "@/lib/import-mapping";
 import { PRIORITIES, STATUSES } from "@/lib/tasks";
+import { cn } from "@/lib/utils";
 
 const UNMAPPED = "__unmapped";
 
@@ -75,21 +76,30 @@ export function MappingStep({
       date_format: dateFormat || null,
     });
 
+  const unmapped = [
+    ...(statusColumn ? (job.column_values[statusColumn] ?? []) : []).filter(
+      (v) => !(v in statusValues),
+    ),
+    ...(priorityColumn ? (job.column_values[priorityColumn] ?? []) : []).filter(
+      (v) => !(v in priorityValues),
+    ),
+  ];
+
   return (
-    <section aria-labelledby="mapping-heading" className="grid gap-6">
+    <section aria-labelledby="mapping-heading" className="grid gap-4">
       <div>
-        <h2 id="mapping-heading" className="text-lg font-semibold">
+        <h2 id="mapping-heading" className="text-base font-semibold">
           Map the columns
         </h2>
-        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           {suggesting ? (
             <>
-              <SparklesIcon className="size-3.5 text-primary" aria-hidden />
+              <SparklesIcon className="size-3.5 text-ai" aria-hidden />
               The AI is reading the headers and first 10 rows…
             </>
           ) : mapping ? (
             <>
-              <SparklesIcon className="size-3.5 text-primary" aria-hidden />
+              <SparklesIcon className="size-3.5 text-ai" aria-hidden />
               Suggested by AI. Check each column and change anything that&apos;s
               off.
             </>
@@ -99,133 +109,186 @@ export function MappingStep({
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th scope="col" className="px-3 py-2 font-medium">
-                Column
-              </th>
-              <th scope="col" className="px-3 py-2 font-medium">
-                Example values
-              </th>
-              <th scope="col" className="px-3 py-2 font-medium">
-                Import as
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {job.headers.map((header) => (
-              <tr key={header}>
-                <th scope="row" className="px-3 py-2 text-left font-medium">
-                  {header}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <table className="w-full text-[13px]">
+            <thead className="border-b text-left text-[11.5px] text-subtle">
+              <tr>
+                <th scope="col" className="px-[18px] py-2.5 font-normal">
+                  Column in file
                 </th>
-                <td className="max-w-64 truncate px-3 py-2 text-muted-foreground">
-                  {(job.column_values[header] ?? []).slice(0, 3).join(" · ") ||
-                    "(empty)"}
-                </td>
-                <td className="px-3 py-2">
-                  <Select
-                    items={TARGETS}
-                    value={columns[header]}
-                    disabled={suggesting}
-                    onValueChange={(target) =>
-                      target &&
-                      setColumns((current) =>
-                        assignTarget(current, header, target as Target),
-                      )
-                    }
-                  >
-                    <SelectTrigger
-                      className="w-40"
-                      aria-label={`Import "${header}" as`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TARGETS.map((target) => (
-                        <SelectItem key={target.value} value={target.value}>
-                          {target.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>
+                <th scope="col" className="px-3 py-2.5 font-normal">
+                  Sample values
+                </th>
+                <th scope="col" className="px-3 py-2.5 font-normal">
+                  Maps to
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {statusColumn && (
-        <ValueMap
-          title={`Status values in "${statusColumn}"`}
-          values={job.column_values[statusColumn] ?? []}
-          options={STATUSES}
-          unmappedLabel="Not mapped (To do, with a warning)"
-          chosen={statusValues}
-          onChange={setStatusValues}
-        />
-      )}
-      {priorityColumn && (
-        <ValueMap
-          title={`Priority values in "${priorityColumn}"`}
-          values={job.column_values[priorityColumn] ?? []}
-          options={PRIORITIES}
-          unmappedLabel="Not mapped (Medium, with a warning)"
-          chosen={priorityValues}
-          onChange={setPriorityValues}
-        />
-      )}
-      {dateColumn && (
-        <div className="grid max-w-sm gap-2">
-          <Label id="date-format-label">
-            Dates in &quot;{dateColumn}&quot;
-          </Label>
-          <Select
-            items={dateItems}
-            value={dateFormat}
-            onValueChange={(value) => setDateFormat(value ?? "")}
-          >
-            <SelectTrigger
-              aria-labelledby="date-format-label"
-              className="w-full"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {dateItems.map((format) => (
-                <SelectItem key={format.value} value={format.value}>
-                  {format.label}
-                </SelectItem>
+            </thead>
+            <tbody className="divide-y divide-[#f2f2ef]">
+              {job.headers.map((header) => (
+                <tr key={header} className="h-[50px]">
+                  <th
+                    scope="row"
+                    className="px-[18px] py-2 text-left font-mono text-[12.5px] font-normal"
+                  >
+                    {header}
+                  </th>
+                  <td className="max-w-56 truncate px-3 py-2 text-[12.5px] text-[#77777c]">
+                    {(job.column_values[header] ?? [])
+                      .slice(0, 3)
+                      .join(" · ") || "(empty)"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Select
+                      items={TARGETS}
+                      value={columns[header]}
+                      disabled={suggesting}
+                      onValueChange={(target) =>
+                        target &&
+                        setColumns((current) =>
+                          assignTarget(current, header, target as Target),
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "w-44 font-mono text-[12.5px]",
+                          columns[header] === "ignore"
+                            ? "bg-[#f7f7f5] text-subtle"
+                            : "border-ai-border bg-ai-wash text-ai-ink",
+                        )}
+                        aria-label={`Import "${header}" as`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TARGETS.map((target) => (
+                          <SelectItem key={target.value} value={target.value}>
+                            {target.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                </tr>
               ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Examples:{" "}
-            {(job.column_values[dateColumn] ?? []).slice(0, 4).join(" · ")}.
-            Dates like &quot;Nov 10, 2026&quot; are always understood.
-          </p>
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {!titleColumn && (
-        <p role="alert" className="text-sm text-destructive">
-          Choose which column holds the task title.
-        </p>
-      )}
-      {Boolean(error) && (
-        <p role="alert" className="text-sm text-destructive">
-          {errorMessage(error)}
-        </p>
-      )}
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={onBack} disabled={saving}>
-          Back
-        </Button>
-        <Button onClick={save} disabled={!titleColumn || saving || suggesting}>
-          {saving ? "Saving…" : "Next: preview"}
-        </Button>
+        <div className="grid gap-3.5">
+          <div className="grid gap-4 rounded-xl border border-ai-border bg-ai-wash px-4 py-3.5">
+            <p className="flex items-center gap-2 text-[13px] font-semibold text-ai-ink">
+              <span aria-hidden className="text-ai">
+                ✦
+              </span>
+              Value cleanup
+            </p>
+            {!statusColumn && !priorityColumn && !dateColumn && (
+              <p className="text-[12.5px] text-muted-foreground">
+                Map a status, priority or due date column to clean up its
+                values.
+              </p>
+            )}
+            {statusColumn && (
+              <ValueMap
+                title={`Status values in "${statusColumn}"`}
+                values={job.column_values[statusColumn] ?? []}
+                options={STATUSES}
+                unmappedLabel="Not mapped (To do)"
+                chosen={statusValues}
+                onChange={setStatusValues}
+              />
+            )}
+            {priorityColumn && (
+              <ValueMap
+                title={`Priority values in "${priorityColumn}"`}
+                values={job.column_values[priorityColumn] ?? []}
+                options={PRIORITIES}
+                unmappedLabel="Not mapped (Medium)"
+                chosen={priorityValues}
+                onChange={setPriorityValues}
+              />
+            )}
+            {dateColumn && (
+              <div className="grid gap-2">
+                <Label
+                  id="date-format-label"
+                  className="text-[11px] font-normal tracking-[0.04em] text-[#77777c] uppercase"
+                >
+                  Dates in &quot;{dateColumn}&quot;
+                </Label>
+                <Select
+                  items={dateItems}
+                  value={dateFormat}
+                  onValueChange={(value) => setDateFormat(value ?? "")}
+                >
+                  <SelectTrigger
+                    aria-labelledby="date-format-label"
+                    className="w-full"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dateItems.map((format) => (
+                      <SelectItem key={format.value} value={format.value}>
+                        {format.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Examples:{" "}
+                  {(job.column_values[dateColumn] ?? [])
+                    .slice(0, 4)
+                    .join(" · ")}
+                  . Dates like &quot;Nov 10, 2026&quot; are always understood.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {unmapped.length > 0 && (
+            <div className="grid gap-1.5 rounded-xl border bg-card px-4 py-3.5 text-[12.5px]">
+              <p className="text-[13px] font-semibold">
+                {unmapped.length === 1
+                  ? "1 value needs you"
+                  : `${unmapped.length} values need you`}
+              </p>
+              <p className="text-muted-foreground">
+                {unmapped
+                  .slice(0, 3)
+                  .map((v) => `"${v}"`)
+                  .join(", ")}{" "}
+                {unmapped.length === 1 ? "has" : "have"} no match yet. Unmapped
+                values import with the default and a warning.
+              </p>
+            </div>
+          )}
+
+          {!titleColumn && (
+            <p role="alert" className="text-sm text-destructive">
+              Choose which column holds the task title.
+            </p>
+          )}
+          {Boolean(error) && (
+            <p role="alert" className="text-sm text-destructive">
+              {errorMessage(error)}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={onBack} disabled={saving}>
+              Back
+            </Button>
+            <Button
+              onClick={save}
+              disabled={!titleColumn || saving || suggesting}
+            >
+              {saving ? "Saving…" : "Next: preview"}
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -249,14 +312,18 @@ function ValueMap<V extends string>({
   const items = [{ value: UNMAPPED, label: unmappedLabel }, ...options];
   return (
     <fieldset className="grid gap-2">
-      <legend className="mb-1 text-sm font-medium">{title}</legend>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      <legend className="mb-2 text-[11px] tracking-[0.04em] text-[#77777c] uppercase">
+        {title}
+      </legend>
+      <ul className="grid gap-1.5">
         {values.map((value) => (
-          <li
-            key={value}
-            className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
-          >
-            <span className="truncate text-sm">&quot;{value}&quot;</span>
+          <li key={value} className="flex items-center gap-2">
+            <span className="min-w-0 truncate rounded-[5px] border bg-card px-1.5 py-0.5 font-mono text-[12px]">
+              {value}
+            </span>
+            <span aria-hidden className="text-[#b5b5b8]">
+              →
+            </span>
             <Select
               items={items}
               value={chosen[value] ?? UNMAPPED}
@@ -269,7 +336,11 @@ function ValueMap<V extends string>({
               }}
             >
               <SelectTrigger
-                className="w-44"
+                size="sm"
+                className={cn(
+                  "ml-auto w-36 bg-card text-xs",
+                  chosen[value] ? "text-[#4a32b0]" : "text-subtle",
+                )}
                 aria-label={`Treat "${value}" as`}
               >
                 <SelectValue />

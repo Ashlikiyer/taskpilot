@@ -6,7 +6,8 @@ export function useTaskParam() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const taskId = searchParams.get("task");
+  // An empty `?task=` means no task, not a drawer stuck loading.
+  const taskId = searchParams.get("task") || null;
 
   const setTaskId = useCallback(
     (id: string | null) => {

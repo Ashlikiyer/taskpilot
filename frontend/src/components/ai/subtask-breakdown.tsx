@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useSuggestSubtasks } from "@/hooks/use-ai";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { ApiError, errorMessage } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 
 /**
  * "Break down with AI": suggests 3–8 subtasks, all ticked to start. The user unticks
@@ -76,9 +77,9 @@ export function SubtaskBreakdown({
   if (!suggestions) {
     return (
       <Button
-        variant="outline"
+        variant="ai-soft"
         size="sm"
-        className="w-fit"
+        className="w-fit border"
         onClick={start}
         disabled={suggest.isPending}
       >
@@ -89,15 +90,20 @@ export function SubtaskBreakdown({
   }
 
   return (
-    <fieldset className="grid gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-      <legend className="flex items-center gap-1.5 px-1 text-sm font-medium">
-        <SparklesIcon className="size-3.5 text-primary" aria-hidden />
-        Suggested subtasks
-      </legend>
-      <p className="text-xs text-muted-foreground">
-        Untick anything you don&apos;t need. Nothing is added until you confirm.
-      </p>
-      <ul className="grid gap-1.5">
+    <fieldset className="overflow-hidden rounded-[10px] border border-ai-border bg-ai-wash">
+      <legend className="sr-only">Suggested subtasks</legend>
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#ebe5fc] px-3.5 py-2.5">
+        <span aria-hidden className="text-ai">
+          ✦
+        </span>
+        <span className="text-[13px] font-semibold text-ai-ink">
+          Break down with AI
+        </span>
+        <span className="text-xs text-ai-muted">
+          {suggestions.length} suggestions · untick what you don&apos;t need
+        </span>
+      </div>
+      <ul className="grid gap-1.5 px-3.5 py-2.5">
         {suggestions.map((title, index) => (
           <li key={`${index}-${title}`} className="flex items-start gap-2">
             <Checkbox
@@ -113,22 +119,19 @@ export function SubtaskBreakdown({
                 })
               }
             />
-            <span id={`suggestion-${taskId}-${index}`} className="text-sm">
+            <span
+              id={`suggestion-${taskId}-${index}`}
+              className={cn(
+                "text-[13px]",
+                !picked.has(index) && "text-[#77777c]",
+              )}
+            >
               {title}
             </span>
           </li>
         ))}
       </ul>
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          onClick={create}
-          disabled={picked.size === 0 || creating}
-        >
-          {creating
-            ? "Adding…"
-            : `Add ${picked.size} ${picked.size === 1 ? "subtask" : "subtasks"}`}
-        </Button>
+      <div className="flex justify-end gap-2 border-t border-[#ebe5fc] px-3.5 py-2.5">
         <Button
           size="sm"
           variant="ghost"
@@ -136,6 +139,16 @@ export function SubtaskBreakdown({
           onClick={() => setSuggestions(null)}
         >
           Cancel
+        </Button>
+        <Button
+          size="sm"
+          variant="ai"
+          onClick={create}
+          disabled={picked.size === 0 || creating}
+        >
+          {creating
+            ? "Adding…"
+            : `Add ${picked.size} ${picked.size === 1 ? "subtask" : "subtasks"}`}
         </Button>
       </div>
     </fieldset>

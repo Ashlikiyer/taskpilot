@@ -80,7 +80,7 @@ export function MemberTable({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

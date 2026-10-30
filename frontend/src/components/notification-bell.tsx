@@ -35,7 +35,13 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon" className="relative" />}
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative size-[34px] shrink-0 rounded-[9px] bg-card"
+          />
+        }
         aria-label={
           unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
         }
@@ -44,7 +50,7 @@ export function NotificationBell() {
         {unread > 0 && (
           <span
             aria-hidden
-            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white"
+            className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-[1.5px] border-card bg-[#d9443a] px-1 text-[10px] font-semibold text-white"
           >
             {unread > 99 ? "99+" : unread}
           </span>

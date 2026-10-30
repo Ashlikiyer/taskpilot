@@ -1,10 +1,11 @@
 "use client";
 
-import { PencilIcon, TagIcon, Trash2Icon } from "lucide-react";
+import { LinkIcon, PencilIcon, TagIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { SubtaskBreakdown } from "@/components/ai/subtask-breakdown";
+import { PriorityPill, StatusLabel } from "@/components/task-ui";
 import { CommentThread } from "@/components/comments/comment-thread";
 import { Markdown } from "@/components/markdown";
 import { ErrorState } from "@/components/states";
@@ -66,8 +67,6 @@ import {
   canEditTasks,
   describeActivity,
   PRIORITIES,
-  PRIORITY_LABEL,
-  STATUS_LABEL,
   STATUSES,
   timeAgo,
   type Task,
@@ -97,7 +96,10 @@ export function TaskDrawer({ workspace }: { workspace: Workspace }) {
       open={taskId !== null}
       onOpenChange={(open) => !open && setTaskId(null)}
     >
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+      <SheetContent
+        side="right"
+        className="w-full gap-0 overflow-y-auto p-0 data-[side=right]:w-full shadow-[-24px_0_48px_rgba(20,20,30,.08)] data-[side=right]:sm:max-w-[600px]"
+      >
         {task.data && project.data && !notFound ? (
           <TaskDetails
             key={task.data.id}
@@ -108,7 +110,7 @@ export function TaskDrawer({ workspace }: { workspace: Workspace }) {
             onOpenTask={setTaskId}
           />
         ) : (
-          <SheetHeader>
+          <SheetHeader className="p-6">
             <SheetTitle>{notFound ? "Task not found" : "Task"}</SheetTitle>
             <SheetDescription>
               {notFound ? "It may have been deleted." : "Loading task details."}
@@ -166,160 +168,189 @@ function TaskDetails({
   ];
 
   return (
-    <div className="grid gap-6 p-4">
-      <SheetHeader className="p-0">
-        {task.parent_id && (
-          <button
-            type="button"
-            className="w-fit text-left text-sm text-muted-foreground hover:underline"
-            onClick={() => onOpenTask(task.parent_id)}
-          >
-            Subtask of {parent.data?.title ?? "parent task"}
-          </button>
-        )}
-        <SheetTitle className="sr-only">{task.title}</SheetTitle>
-        <SheetDescription className="sr-only">
-          Task details and history
-        </SheetDescription>
-        {canEdit ? (
-          <TitleInput title={task.title} onSave={(title) => save({ title })} />
-        ) : (
-          <p className="text-xl font-semibold">{task.title}</p>
-        )}
-      </SheetHeader>
-
-      <dl className="grid grid-cols-[7rem_1fr] items-center gap-x-4 gap-y-3 text-sm">
-        <dt className="text-muted-foreground">Status</dt>
-        <dd>
-          {canEdit ? (
-            <Select
-              items={STATUSES}
-              value={task.status}
-              onValueChange={(status) => status && save({ status })}
-            >
-              <SelectTrigger className="w-40" aria-label="Status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            STATUS_LABEL[task.status]
-          )}
-        </dd>
-
-        <dt className="text-muted-foreground">Priority</dt>
-        <dd>
-          {canEdit ? (
-            <Select
-              items={PRIORITIES}
-              value={task.priority}
-              onValueChange={(priority) => priority && save({ priority })}
-            >
-              <SelectTrigger className="w-40" aria-label="Priority">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            PRIORITY_LABEL[task.priority]
-          )}
-        </dd>
-
-        <dt className="text-muted-foreground">Assignee</dt>
-        <dd>
-          {canEdit ? (
-            <Select
-              items={assigneeItems}
-              value={task.assignee_id ?? UNASSIGNED}
-              onValueChange={(value) =>
-                value &&
-                save({ assignee_id: value === UNASSIGNED ? null : value })
-              }
-            >
-              <SelectTrigger className="w-40" aria-label="Assignee">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {assigneeItems.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            (task.assignee_id && memberNames[task.assignee_id]) || "Unassigned"
-          )}
-        </dd>
-
-        <dt>
-          <Label
-            htmlFor="task-due-date"
-            className="font-normal text-muted-foreground"
-          >
-            Due date
-          </Label>
-        </dt>
-        <dd>
-          <Input
-            id="task-due-date"
-            type="date"
-            className="w-40"
-            value={task.due_date ?? ""}
-            disabled={!canEdit}
-            onChange={(e) => save({ due_date: e.target.value || null })}
-          />
-        </dd>
-
-        <dt className="text-muted-foreground">Labels</dt>
-        <dd>
-          <LabelPicker
-            task={task}
-            workspaceId={workspace.id}
-            canEdit={canEdit}
-            onSave={save}
-          />
-        </dd>
-      </dl>
-
-      <DescriptionField
-        description={task.description}
-        canEdit={canEdit}
-        onSave={(description) => save({ description })}
-      />
-
-      {task.parent_id === null && (
-        <Subtasks task={task} canEdit={canEdit} onOpenTask={onOpenTask} />
-      )}
-
-      <CommentThread
-        taskId={task.id}
-        members={members.data ?? []}
-        currentUserId={me.data?.id}
-        canComment={project.archived_at === null}
-        canUseAI={workspace.role !== "viewer"}
-      />
-
-      <Activity taskId={task.id} memberNames={memberNames} />
-
-      {canEdit && canDeleteTask(workspace, task, me.data?.id) && (
-        <DeleteTaskButton
-          task={task}
-          onDeleted={() => onOpenTask(task.parent_id)}
+    <div className="grid">
+      <div className="sticky top-0 z-10 flex h-[52px] items-center gap-2.5 border-b bg-card pr-12 pl-5 text-[12.5px] text-muted-foreground">
+        <span
+          aria-hidden
+          className="h-[11px] w-3.5 rounded-[2px_3px_3px_3px]"
+          style={{ backgroundColor: project.color }}
         />
-      )}
+        <span className="truncate">{project.name}</span>
+        <Button
+          variant="outline"
+          size="xs"
+          className="ml-auto"
+          onClick={() => {
+            void navigator.clipboard
+              ?.writeText(window.location.href)
+              .then(() => toast.success("Link copied"));
+          }}
+        >
+          <LinkIcon />
+          Copy link
+        </Button>
+      </div>
+      <div className="grid gap-5 px-6 py-5">
+        <SheetHeader className="p-0">
+          {task.parent_id && (
+            <button
+              type="button"
+              className="w-fit text-left text-sm text-muted-foreground hover:underline"
+              onClick={() => onOpenTask(task.parent_id)}
+            >
+              Subtask of {parent.data?.title ?? "parent task"}
+            </button>
+          )}
+          <SheetTitle className="sr-only">{task.title}</SheetTitle>
+          <SheetDescription className="sr-only">
+            Task details and history
+          </SheetDescription>
+          {canEdit ? (
+            <TitleInput
+              title={task.title}
+              onSave={(title) => save({ title })}
+            />
+          ) : (
+            <p className="text-[21px] leading-snug font-semibold tracking-[-0.015em]">
+              {task.title}
+            </p>
+          )}
+        </SheetHeader>
+
+        <dl className="grid grid-cols-[96px_1fr] items-center gap-x-3 gap-y-2.5 text-[13px] sm:grid-cols-[96px_1fr_96px_1fr] [&>dt]:text-[#77777c]">
+          <dt className="text-muted-foreground">Status</dt>
+          <dd>
+            {canEdit ? (
+              <Select
+                items={STATUSES}
+                value={task.status}
+                onValueChange={(status) => status && save({ status })}
+              >
+                <SelectTrigger className="w-40" aria-label="Status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <StatusLabel status={task.status} />
+            )}
+          </dd>
+
+          <dt className="text-muted-foreground">Priority</dt>
+          <dd>
+            {canEdit ? (
+              <Select
+                items={PRIORITIES}
+                value={task.priority}
+                onValueChange={(priority) => priority && save({ priority })}
+              >
+                <SelectTrigger className="w-40" aria-label="Priority">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <PriorityPill priority={task.priority} />
+            )}
+          </dd>
+
+          <dt className="text-muted-foreground">Assignee</dt>
+          <dd>
+            {canEdit ? (
+              <Select
+                items={assigneeItems}
+                value={task.assignee_id ?? UNASSIGNED}
+                onValueChange={(value) =>
+                  value &&
+                  save({ assignee_id: value === UNASSIGNED ? null : value })
+                }
+              >
+                <SelectTrigger className="w-40" aria-label="Assignee">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {assigneeItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              (task.assignee_id && memberNames[task.assignee_id]) ||
+              "Unassigned"
+            )}
+          </dd>
+
+          <dt>
+            <Label
+              htmlFor="task-due-date"
+              className="font-normal text-muted-foreground"
+            >
+              Due date
+            </Label>
+          </dt>
+          <dd>
+            <Input
+              id="task-due-date"
+              type="date"
+              className="w-40"
+              value={task.due_date ?? ""}
+              disabled={!canEdit}
+              onChange={(e) => save({ due_date: e.target.value || null })}
+            />
+          </dd>
+
+          <dt className="text-muted-foreground">Labels</dt>
+          <dd className="sm:col-span-3">
+            <LabelPicker
+              task={task}
+              workspaceId={workspace.id}
+              canEdit={canEdit}
+              onSave={save}
+            />
+          </dd>
+        </dl>
+
+        <DescriptionField
+          description={task.description}
+          canEdit={canEdit}
+          onSave={(description) => save({ description })}
+        />
+
+        {task.parent_id === null && (
+          <Subtasks task={task} canEdit={canEdit} onOpenTask={onOpenTask} />
+        )}
+
+        <CommentThread
+          taskId={task.id}
+          members={members.data ?? []}
+          currentUserId={me.data?.id}
+          canComment={project.archived_at === null}
+          canUseAI={workspace.role !== "viewer"}
+        />
+
+        <Activity taskId={task.id} memberNames={memberNames} />
+
+        {canEdit && canDeleteTask(workspace, task, me.data?.id) && (
+          <DeleteTaskButton
+            task={task}
+            onDeleted={() => onOpenTask(task.parent_id)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -345,7 +376,7 @@ function TitleInput({
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-      className="h-auto border-transparent px-1 text-xl font-semibold shadow-none hover:border-input"
+      className="h-auto border-transparent bg-transparent px-1 text-[21px] leading-snug md:text-[21px] font-semibold tracking-[-0.015em] shadow-none hover:border-input"
     />
   );
 }
