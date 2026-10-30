@@ -60,7 +60,8 @@ jobs:
   e2e:
     # The spec's smoke test in a real browser, after both test jobs pass.
     needs: [backend, frontend]
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.56 has no browser builds for Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
