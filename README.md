@@ -7,6 +7,10 @@ Portfolio project showing full-stack development (Next.js + FastAPI), AI integra
 workflow automation, data import, and disciplined testing of AI-generated code.
 The full specification is in [docs/TASKPILOT_SPEC.md](docs/TASKPILOT_SPEC.md).
 
+**Live demo:** [taskpilot-appp.vercel.app](https://taskpilot-appp.vercel.app). Log in with
+`demo@taskpilot.dev` / `taskpilot-demo`. The free backend sleeps when idle, so the first
+page can take about a minute to load.
+
 ## Tech stack
 
 | Layer | Tools |
@@ -193,7 +197,7 @@ demo account.
   - [x] F12 dashboard: open by status, overdue (vs last week), completed per week, workload, share created by AI, per-project filter
   - [x] F13 responsive at 375 px: menu sheet, bottom tab bar, horizontal board, bottom-sheet quick-add
   - [x] Demo seed script and Playwright smoke test in CI
-  - [ ] Deployment (Supabase, Render, Vercel)
+  - [x] Deployment: Vercel (frontend), Render (API, Docker), Supabase (Postgres); Gmail intake and the daily digest running
 
 ## AI log
 
