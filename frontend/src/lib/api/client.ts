@@ -89,12 +89,20 @@ async function request<T>(
 
   const send = () => {
     const headers = new Headers();
-    if (body !== undefined) headers.set("Content-Type", "application/json");
+    // File uploads send FormData; the browser sets its multipart Content-Type.
+    const isForm = body instanceof FormData;
+    if (body !== undefined && !isForm)
+      headers.set("Content-Type", "application/json");
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(`${API_PREFIX}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isForm
+            ? (body as FormData)
+            : JSON.stringify(body),
       credentials: "same-origin",
     });
   };

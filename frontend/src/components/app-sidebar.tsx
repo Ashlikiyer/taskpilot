@@ -3,6 +3,7 @@
 import {
   ChevronsUpDownIcon,
   CircleCheckIcon,
+  FileSpreadsheetIcon,
   LayoutDashboardIcon,
   PlusIcon,
   SettingsIcon,
@@ -59,7 +60,14 @@ export function AppSidebar({
         ]),
     { href: `${base}/settings/members`, label: "Members", icon: UsersIcon },
     ...(hasRole(workspace.role, "admin")
-      ? [{ href: `${base}/settings`, label: "Settings", icon: SettingsIcon }]
+      ? [
+          {
+            href: `${base}/import`,
+            label: "Import",
+            icon: FileSpreadsheetIcon,
+          },
+          { href: `${base}/settings`, label: "Settings", icon: SettingsIcon },
+        ]
       : []),
   ];
 

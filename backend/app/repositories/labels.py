@@ -70,3 +70,8 @@ async def set_task_labels(db: AsyncSession, task_id: uuid.UUID, label_ids: set[u
         )
     db.add_all(TaskLabel(task_id=task_id, label_id=lid) for lid in label_ids - current)
     await db.flush()
+
+
+async def add_task_labels(db: AsyncSession, pairs: list[tuple[uuid.UUID, uuid.UUID]]) -> None:
+    db.add_all(TaskLabel(task_id=task_id, label_id=label_id) for task_id, label_id in pairs)
+    await db.flush()
