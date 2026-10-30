@@ -10,7 +10,8 @@ import { safeRedirect } from "@/lib/safe-redirect";
 
 function RegisterForm() {
   const router = useRouter();
-  const next = useSearchParams().get("next");
+  const params = useSearchParams();
+  const next = params.get("next");
   const registerUser = useRegister();
   const [error, setError] = useState<string>();
 
@@ -19,6 +20,7 @@ function RegisterForm() {
       mode="register"
       error={error}
       nextPath={next ?? undefined}
+      defaults={{ email: params.get("email") ?? undefined }}
       onSubmit={async (values) => {
         setError(undefined);
         try {
