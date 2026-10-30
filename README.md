@@ -134,6 +134,44 @@ npm run e2e
 
 CI runs the same checks on every pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
+## Deployment
+
+```
+Browser ──► Vercel (Next.js) ──/api/v1/*──► Render (FastAPI, Docker) ──► Supabase (Postgres)
+```
+
+All free tiers. The browser only talks to Vercel, which forwards `/api/v1/*` to Render, so
+the refresh-token cookie stays first-party.
+
+**Database (Supabase).** Create a project and copy the **session pooler** connection string
+(Connect → Session pooler, port 5432). It works over IPv4 and keeps asyncpg's prepared
+statements working; the transaction pooler on port 6543 does not. A `postgresql://` URL is
+fine: the app switches it to asyncpg itself. Load the demo data once from your machine:
+
+```bash
+cd backend
+DATABASE_URL="<session pooler url>" uv run alembic upgrade head
+DATABASE_URL="<session pooler url>" uv run python ../scripts/seed.py
+```
+
+**Backend (Render).** New → Blueprint → this repo. [`render.yaml`](render.yaml) builds
+[`backend/Dockerfile`](backend/Dockerfile) (Python 3.14, dependencies from `uv.lock`), runs
+migrations on start, and checks `/api/v1/health`. Render generates `JWT_SECRET`,
+`CRON_SECRET` and `INTAKE_SECRET`; you enter `DATABASE_URL`, `GROQ_API_KEY` and
+`FRONTEND_ORIGIN` (the Vercel URL). The free instance sleeps after 15 minutes idle and takes
+about a minute to wake.
+
+**Frontend (Vercel).** Import the repo with root directory `frontend` and set `BACKEND_URL`
+to the Render URL.
+
+**Automations.** In GitHub → Settings → Secrets → Actions, add `API_URL` (the Render URL)
+and `CRON_SECRET` (copied from Render) for the [daily digest](.github/workflows/digest.yml).
+For Gmail intake, set the Apps Script's `WEBHOOK_URL` to
+`https://<vercel-url>/api/v1/intake/email` and `INTAKE_SECRET` to Render's value.
+
+**Before a demo.** Open the site two minutes early to wake the backend, then log in with the
+demo account.
+
 ## Roadmap
 
 - [x] Phase 0: monorepo, FastAPI skeleton with health check, Alembic, Next.js with API rewrite, CI

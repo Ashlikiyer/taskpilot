@@ -1,0 +1,10 @@
+# Only the app, migrations and lock files go into the image; never secrets.
+.env
+.env.*
+.venv
+.coverage
+.mypy_cache
+.pytest_cache
+.ruff_cache
+**/__pycache__
+tests
