@@ -174,6 +174,24 @@ async def test_ai_cannot_assign_strangers(
     assert any("assignee" in warning for warning in item["draft"]["warnings"])
 
 
+async def test_ai_cannot_assign_members_outside_the_project(
+    client: AsyncClient, db_session: AsyncSession, fake_ai: FakeProvider
+) -> None:
+    """Seen live: the AI assigned the email's signer, a workspace member who isn't on
+    the project, and accepting the request then failed."""
+    w = await _world(db_session, client)
+    ana = await add_member(db_session, w.workspace, "ana@example.com", MemberRole.member)
+    fake_ai.reply({**DRAFT, "assignee_id": str(ana.id)})
+
+    await client.post("/api/v1/intake/email", json=_email(), headers=SECRET)
+
+    [item] = (await _inbox(client, w)).json()
+    assert item["draft"]["assignee_id"] is None
+    assert any("assignee" in warning for warning in item["draft"]["warnings"])
+    sent_members = json.loads(fake_ai.calls[0].messages[0].content)["MEMBERS"]
+    assert {m["name"] for m in sent_members} == {"Olive", "Mark"}
+
+
 # --- public form ---------------------------------------------------------------------
 
 

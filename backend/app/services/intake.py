@@ -103,10 +103,14 @@ async def _draft(
     assert owner is not None
     cleaned = clean_email_body(body)
 
+    # Only people who can work on this project: admins and owners, plus members of
+    # it. Anyone else the AI picks becomes unassigned with a warning (check_draft).
+    project_member_ids = (await projects_repo.member_ids_by_project(db, [project.id]))[project.id]
     members = {
         user.id: user.name
         for member, user in await workspaces_repo.list_members(db, workspace.id)
-        if member.role != MemberRole.viewer
+        if member.role in (MemberRole.owner, MemberRole.admin)
+        or (member.role == MemberRole.member and user.id in project_member_ids)
     }
     labels = {
         label.name.lower(): label.name
