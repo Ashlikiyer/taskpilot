@@ -12,6 +12,8 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: ci,
   retries: ci ? 1 : 0,
+  // CI machines are slower than a laptop; the default 5s is too tight there.
+  expect: { timeout: 15_000 },
   reporter: ci ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:3000",

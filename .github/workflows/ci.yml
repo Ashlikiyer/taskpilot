@@ -80,6 +80,7 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/taskpilot_e2e
       JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else
       AI_PROVIDER: echo # quick-add answers offline: no Groq key, no cost
+      RATE_LIMIT_ENABLED: "false" # the test (and its retry) registers a new user each run
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6

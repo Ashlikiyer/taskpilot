@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
  * the new user, so My Tasks lists it while open and drops it once it's done.
  */
 test("register, plan a task with quick-add and finish it", async ({ page }) => {
-  const id = Date.now();
+  const id = crypto.randomUUID().slice(0, 8);
   const title = `Smoke test task ${id}`;
 
   await page.goto("/register");
@@ -30,7 +30,9 @@ test("register, plan a task with quick-add and finish it", async ({ page }) => {
   const projectDialog = page.getByRole("dialog");
   await projectDialog.getByLabel("Name").fill("Website");
   await projectDialog.getByRole("button", { name: "Create project" }).click();
-  await expect(page.getByRole("heading", { name: "Website" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Website", exact: true }),
+  ).toBeVisible();
 
   // Quick-add: describe the task, then review and edit the AI's draft.
   await page
@@ -51,19 +53,30 @@ test("register, plan a task with quick-add and finish it", async ({ page }) => {
   const todo = page.getByRole("listitem", { name: /^To do,/ });
   await expect(todo.getByText(title)).toBeVisible();
 
+  // Next keeps the previous page mounted (hidden), so match the My Tasks row: its
+  // name is the title then its columns, while the board card's is "title. Press…".
   await page.getByRole("link", { name: "My Tasks" }).first().click();
-  await expect(page.getByText(title)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: new RegExp(`^${title} `) }),
+  ).toBeVisible();
   await page
     .getByRole("region", { name: "Projects" })
     .getByRole("link", { name: "Website" })
     .click();
 
-  // Move it to Done with the keyboard (the same drag the mouse does).
-  const card = page.getByRole("button", { name: new RegExp(`^${title}\.`) });
+  // Move it to Done with the keyboard (the same drag the mouse does). Wait for
+  // each screen-reader announcement so a fast machine doesn't outrun the drag.
+  const card = page.getByRole("button", { name: new RegExp(`^${title}\\.`) });
+  await expect(card).toBeVisible();
   await card.focus();
   await page.keyboard.press("Space");
-  for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowRight");
+  await expect(card).toHaveAttribute("aria-pressed", "true"); // picked up
+  for (const column of ["In progress", "In review", "Done"]) {
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByText(`${title} is over ${column}.`)).toBeAttached();
+  }
   await page.keyboard.press("Space");
+  await expect(page.getByText(`${title} was dropped in Done.`)).toBeAttached();
   const done = page.getByRole("listitem", { name: /^Done,/ });
   await expect(done.getByText(title)).toBeVisible();
 
