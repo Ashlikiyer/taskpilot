@@ -1,29 +1,33 @@
-import Link from "next/link";
-
-import { BackendStatus } from "@/components/backend-status";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  BoardsSection,
+  CaptureSection,
+  Faq,
+  Pricing,
+} from "@/components/landing/landing-interactive";
+import {
+  CallToAction,
+  FeatureGrid,
+  Hero,
+  LandingFooter,
+  LandingNav,
+  TeamSection,
+} from "@/components/landing/landing-sections";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-start justify-center gap-6 px-4 py-16">
-      <h1 className="text-4xl font-semibold tracking-tight">TaskPilot</h1>
-      <p className="text-lg text-muted-foreground">
-        AI-powered task management for small teams. Create tasks from plain
-        sentences, get a daily digest of overdue work, and turn emails and
-        spreadsheets into tasks automatically.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <Link href="/register" className={buttonVariants({ size: "lg" })}>
-          Get started
-        </Link>
-        <Link
-          href="/login"
-          className={buttonVariants({ size: "lg", variant: "outline" })}
-        >
-          Log in
-        </Link>
-      </div>
-      <BackendStatus />
-    </main>
+    <div className="flex w-full flex-1 flex-col overflow-x-hidden bg-white text-[#15171a]">
+      <LandingNav />
+      <main>
+        <Hero />
+        <CaptureSection />
+        <TeamSection />
+        <BoardsSection />
+        <FeatureGrid />
+        <Pricing />
+        <Faq />
+        <CallToAction />
+      </main>
+      <LandingFooter />
+    </div>
   );
 }

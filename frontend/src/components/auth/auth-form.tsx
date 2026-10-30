@@ -27,19 +27,22 @@ const registerSchema = z.object({
 export type LoginValues = z.infer<typeof loginSchema>;
 export type RegisterValues = z.infer<typeof registerSchema>;
 
+type Shared = {
+  error?: string;
+  nextPath?: string;
+  /** Pre-filled values, e.g. the email typed on the landing page. */
+  defaults?: { email?: string; password?: string };
+};
+
 type Props =
-  | {
+  | ({
       mode: "login";
       onSubmit: (values: LoginValues) => Promise<void>;
-      error?: string;
-      nextPath?: string;
-    }
-  | {
+    } & Shared)
+  | ({
       mode: "register";
       onSubmit: (values: RegisterValues) => Promise<void>;
-      error?: string;
-      nextPath?: string;
-    };
+    } & Shared);
 
 type FormValues = { name?: string; email: string; password: string };
 
@@ -51,7 +54,11 @@ export function AuthForm(props: Props) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(isRegister ? registerSchema : loginSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: {
+      name: "",
+      email: props.defaults?.email ?? "",
+      password: props.defaults?.password ?? "",
+    },
   });
 
   const submit = handleSubmit(async (values) => {
