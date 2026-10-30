@@ -8,6 +8,7 @@ ProjectName = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
 Color = Annotated[str, StringConstraints(to_lower=True, pattern=r"^#[0-9a-fA-F]{6}$")]
 MemberIds = Annotated[list[uuid.UUID], Field(max_length=500)]
+IntakeLabel = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)]
 
 DEFAULT_COLOR = "#6366f1"
 
@@ -32,8 +33,12 @@ class ProjectUpdate(BaseModel):
     description: Description | None = None
     color: Color | None = None
     member_ids: MemberIds | None = None
+    # F10 intake settings (admins). An empty label turns email intake off.
+    intake_email_label: IntakeLabel | None = None
+    intake_form_enabled: bool | None = None
 
     _description = field_validator("description")(_blank_to_none)
+    _label = field_validator("intake_email_label")(_blank_to_none)
 
 
 class ProjectOut(BaseModel):
@@ -45,3 +50,8 @@ class ProjectOut(BaseModel):
     archived_at: datetime | None
     member_ids: list[uuid.UUID]
     created_at: datetime
+    intake_email_label: str | None
+    intake_form_enabled: bool
+    intake_slug: str | None
+    # Pending items in the project's Inbox.
+    intake_pending: int

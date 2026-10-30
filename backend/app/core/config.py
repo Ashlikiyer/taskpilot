@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 20.0
     # Shared secret for POST /internal/digest/run (GitHub Actions). Unset = endpoint disabled.
     cron_secret: SecretStr | None = None
+    # Shared secret for POST /intake/email (the Gmail Apps Script). Unset = disabled.
+    intake_secret: SecretStr | None = None
     rate_limit_enabled: bool = True
 
 

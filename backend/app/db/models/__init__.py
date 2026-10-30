@@ -5,6 +5,7 @@ from app.db.models.auth import RefreshToken
 from app.db.models.base import Base
 from app.db.models.comment import Comment, Notification, NotificationType
 from app.db.models.digest import Digest
+from app.db.models.intake import IntakeItem, IntakeSource, IntakeStatus
 from app.db.models.project import Project, ProjectMember
 from app.db.models.task import (
     ActivityLog,
@@ -24,6 +25,9 @@ __all__ = [
     "Base",
     "Comment",
     "Digest",
+    "IntakeItem",
+    "IntakeSource",
+    "IntakeStatus",
     "Invite",
     "Label",
     "MemberRole",

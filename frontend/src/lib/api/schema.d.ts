@@ -592,6 +592,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intake/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive Email
+         * @description Webhook for the Gmail Apps Script. The same message is never processed twice.
+         */
+        post: operations["receive_email_api_v1_intake_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/form/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Form Info
+         * @description Public: the project and workspace names for the request form.
+         */
+        get: operations["form_info_api_v1_intake_form__slug__get"];
+        put?: never;
+        /**
+         * Submit Form
+         * @description Public request form (no login). Rate limited to 10 per hour per IP.
+         */
+        post: operations["submit_form_api_v1_intake_form__slug__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/intake": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Intake
+         * @description Inbox items for admins; pending by default.
+         */
+        get: operations["list_intake_api_v1_projects__project_id__intake_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/{item_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Item
+         * @description Create a task from the proposal, with optional edits made in the Inbox.
+         */
+        post: operations["accept_item_api_v1_intake__item_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/{item_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Item */
+        post: operations["reject_item_api_v1_intake__item_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -740,6 +841,43 @@ export interface components {
             /** Reason */
             reason?: ("due_soon" | "stalled") | null;
         };
+        /**
+         * EmailIntake
+         * @description What the Gmail Apps Script posts for each new message under a TaskPilot label.
+         */
+        EmailIntake: {
+            /** Message Id */
+            message_id: string;
+            /**
+             * Subject
+             * @default
+             */
+            subject?: string;
+            /**
+             * Body
+             * @default
+             */
+            body?: string;
+            /** Sender */
+            sender: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Label */
+            label: string;
+        };
+        /** EmailIntakeResult */
+        EmailIntakeResult: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Duplicate */
+            duplicate: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -758,6 +896,101 @@ export interface components {
              */
             database: "ok" | "unavailable";
         };
+        /**
+         * IntakeAccept
+         * @description Optional edits made in the Inbox before accepting; anything left out keeps the
+         *     AI draft's value.
+         */
+        IntakeAccept: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Assignee Id */
+            assignee_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Priority */
+            priority?: ("low" | "medium" | "high" | "urgent") | null;
+            /** Label Ids */
+            label_ids?: string[] | null;
+        };
+        /**
+         * IntakeFormInfo
+         * @description Public: just enough to label the request form.
+         */
+        IntakeFormInfo: {
+            /** Project Name */
+            project_name: string;
+            /** Workspace Name */
+            workspace_name: string;
+        };
+        /** IntakeFormSubmission */
+        IntakeFormSubmission: {
+            /** Name */
+            name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Title */
+            title: string;
+            /**
+             * Details
+             * @default
+             */
+            details?: string;
+            /**
+             * Website
+             * @default
+             */
+            website?: string;
+        };
+        /** IntakeItemOut */
+        IntakeItemOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "email" | "form";
+            /** Raw Subject */
+            raw_subject: string;
+            /** Raw Body */
+            raw_body: string;
+            /** Sender */
+            sender: string;
+            draft: components["schemas"]["QuickAddDraft"];
+            /** Confidence */
+            confidence: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "rejected";
+            /** Task Id */
+            task_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * IntakeStatus
+         * @enum {string}
+         */
+        IntakeStatus: "pending" | "accepted" | "rejected";
         /** InviteCreate */
         InviteCreate: {
             /**
@@ -950,6 +1183,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Intake Email Label */
+            intake_email_label: string | null;
+            /** Intake Form Enabled */
+            intake_form_enabled: boolean;
+            /** Intake Slug */
+            intake_slug: string | null;
+            /** Intake Pending */
+            intake_pending: number;
         };
         /**
          * ProjectUpdate
@@ -964,6 +1205,10 @@ export interface components {
             color?: string | null;
             /** Member Ids */
             member_ids?: string[] | null;
+            /** Intake Email Label */
+            intake_email_label?: string | null;
+            /** Intake Form Enabled */
+            intake_form_enabled?: boolean | null;
         };
         /**
          * QuickAddDraft
@@ -2662,6 +2907,208 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DigestRunResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    receive_email_api_v1_intake_email_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-intake-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailIntake"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailIntakeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    form_info_api_v1_intake_form__slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeFormInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_form_api_v1_intake_form__slug__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeFormSubmission"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_intake_api_v1_projects__project_id__intake_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["IntakeStatus"] | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeItemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_item_api_v1_intake__item_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["IntakeAccept"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_item_api_v1_intake__item_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeItemOut"];
                 };
             };
             /** @description Validation Error */

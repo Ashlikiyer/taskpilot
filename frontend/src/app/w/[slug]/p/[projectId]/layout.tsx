@@ -1,6 +1,6 @@
 "use client";
 
-import { KanbanIcon, ListIcon } from "lucide-react";
+import { InboxIcon, KanbanIcon, ListIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentProject } from "@/hooks/use-projects";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
 import { ApiError } from "@/lib/api/client";
+import { hasRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 export default function ProjectLayout({
@@ -59,15 +60,25 @@ export default function ProjectLayout({
 
   const base = `/w/${workspace.slug}/p/${project.data.id}`;
   const tabs = [
-    { href: base, label: "Board", icon: KanbanIcon },
-    { href: `${base}/list`, label: "List", icon: ListIcon },
+    { href: base, label: "Board", icon: KanbanIcon, count: 0 },
+    { href: `${base}/list`, label: "List", icon: ListIcon, count: 0 },
+    ...(hasRole(workspace.role, "admin")
+      ? [
+          {
+            href: `${base}/inbox`,
+            label: "Inbox",
+            icon: InboxIcon,
+            count: project.data.intake_pending,
+          },
+        ]
+      : []),
   ];
 
   return (
     <div className="grid gap-6">
       <ProjectHeader workspace={workspace} project={project.data} />
       <nav aria-label="Project views" className="flex gap-1 border-b">
-        {tabs.map(({ href, label, icon: Icon }) => {
+        {tabs.map(({ href, label, icon: Icon, count }) => {
           const active = pathname === href;
           return (
             <Link
@@ -83,6 +94,12 @@ export default function ProjectLayout({
             >
               <Icon className="size-4" />
               {label}
+              {count > 0 && (
+                <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
+                  {count}
+                  <span className="sr-only"> pending</span>
+                </span>
+              )}
             </Link>
           );
         })}

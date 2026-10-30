@@ -12,11 +12,13 @@ from app.db.models import MemberRole, User
 from app.db.session import SessionLocal
 from app.repositories import users as users_repo
 from app.services import comments as comments_service
+from app.services import intake as intake_service
 from app.services import projects as projects_service
 from app.services import tasks as tasks_service
 from app.services import workspaces as workspaces_service
 from app.services.ai.provider import AIProvider, get_provider
 from app.services.comments import CommentContext
+from app.services.intake import IntakeContext
 from app.services.projects import ProjectContext
 from app.services.tasks import TaskContext
 from app.services.workspaces import WorkspaceContext
@@ -79,6 +81,13 @@ async def get_comment_context(
 
 
 CommentAccess = Annotated[CommentContext, Depends(get_comment_context)]
+
+
+async def get_intake_context(item_id: uuid.UUID, db: DbSession, user: CurrentUser) -> IntakeContext:
+    return await intake_service.get_context(db, item_id, user)
+
+
+IntakeAccess = Annotated[IntakeContext, Depends(get_intake_context)]
 
 
 def get_ai_provider() -> AIProvider:

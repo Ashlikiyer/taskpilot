@@ -1,4 +1,3 @@
-import hmac
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header
@@ -6,6 +5,7 @@ from fastapi import APIRouter, Depends, Header
 from app.core.config import get_settings
 from app.core.deps import AI, DbSession, require_role
 from app.core.errors import AppError
+from app.core.security import secrets_match
 from app.db.models import MemberRole
 from app.schemas.digest import DigestOut, DigestRunResult
 from app.services import digest as digest_service
@@ -26,12 +26,7 @@ def require_cron_secret(
     x_cron_secret: Annotated[str | None, Header(max_length=200)] = None,
 ) -> None:
     """Shared-secret check for the scheduled job, compared in constant time."""
-    expected = get_settings().cron_secret
-    if (
-        expected is None
-        or x_cron_secret is None
-        or not hmac.compare_digest(x_cron_secret.encode(), expected.get_secret_value().encode())
-    ):
+    if not secrets_match(x_cron_secret, get_settings().cron_secret):
         raise AppError(401, "UNAUTHENTICATED", "Invalid cron secret")
 
 

@@ -1,6 +1,7 @@
 """Password hashing, JWT access tokens and opaque (refresh/invite) tokens."""
 
 import hashlib
+import hmac
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -8,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
+from pydantic import SecretStr
 
 from app.core.config import get_settings
 from app.core.errors import AppError
@@ -71,3 +73,11 @@ def new_opaque_token() -> tuple[str, str]:
 
 def hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def secrets_match(given: str | None, expected: SecretStr | None) -> bool:
+    """Compare a shared-secret header in constant time. An unset secret never matches,
+    so an endpoint stays closed until it is configured."""
+    if expected is None or given is None:
+        return False
+    return hmac.compare_digest(given.encode(), expected.get_secret_value().encode())

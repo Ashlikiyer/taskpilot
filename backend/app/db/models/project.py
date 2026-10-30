@@ -1,7 +1,14 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -18,6 +25,11 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(String(2000))
     color: Mapped[str] = mapped_column(String(7))
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # F10 intake settings. The Gmail label routes forwarded emails to this project;
+    # the slug is a random, unguessable path for the public request form.
+    intake_email_label: Mapped[str | None] = mapped_column(String(200), unique=True)
+    intake_form_enabled: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    intake_slug: Mapped[str | None] = mapped_column(String(80), unique=True)
 
 
 class ProjectMember(UUIDPrimaryKeyMixin, TimestampMixin, Base):

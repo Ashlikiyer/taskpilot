@@ -1,16 +1,19 @@
+import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import AppError, NotFoundError
+from app.core.errors import AppError, ConflictError, NotFoundError
 from app.db.models import MemberRole, Project, User
+from app.repositories import intake as intake_repo
 from app.repositories import projects as projects_repo
 from app.repositories import workspaces as workspaces_repo
 from app.schemas.project import ProjectCreate, ProjectOut, ProjectUpdate
 from app.services import workspaces as workspaces_service
-from app.services.workspaces import WorkspaceContext
+from app.services.workspaces import WorkspaceContext, slugify
 
 
 @dataclass(frozen=True)
@@ -25,7 +28,7 @@ def _project_not_found() -> NotFoundError:
     return NotFoundError("Project not found", code="PROJECT_NOT_FOUND")
 
 
-def _to_out(project: Project, member_ids: list[uuid.UUID]) -> ProjectOut:
+def _to_out(project: Project, member_ids: list[uuid.UUID], pending: int = 0) -> ProjectOut:
     return ProjectOut(
         id=project.id,
         workspace_id=project.workspace_id,
@@ -35,17 +38,27 @@ def _to_out(project: Project, member_ids: list[uuid.UUID]) -> ProjectOut:
         archived_at=project.archived_at,
         member_ids=member_ids,
         created_at=project.created_at,
+        intake_email_label=project.intake_email_label,
+        intake_form_enabled=project.intake_form_enabled,
+        intake_slug=project.intake_slug,
+        intake_pending=pending,
     )
 
 
 async def to_outs(db: AsyncSession, projects: list[Project]) -> list[ProjectOut]:
-    members = await projects_repo.member_ids_by_project(db, (p.id for p in projects))
-    return [_to_out(project, members[project.id]) for project in projects]
+    ids = [p.id for p in projects]
+    members = await projects_repo.member_ids_by_project(db, ids)
+    pending = await intake_repo.pending_counts(db, ids)
+    return [_to_out(p, members[p.id], pending.get(p.id, 0)) for p in projects]
 
 
 async def _out(db: AsyncSession, project: Project) -> ProjectOut:
-    members = await projects_repo.member_ids_by_project(db, [project.id])
-    return _to_out(project, members[project.id])
+    return (await to_outs(db, [project]))[0]
+
+
+def _new_intake_slug(name: str) -> str:
+    """Readable but unguessable: "acme-website-k3x9q2"."""
+    return f"{slugify(name)[:40]}-{secrets.token_hex(3)}"
 
 
 async def _validated_member_ids(
@@ -116,7 +129,19 @@ async def update(db: AsyncSession, ctx: ProjectContext, data: ProjectUpdate) -> 
     if "member_ids" in fields and data.member_ids is not None:
         member_ids = await _validated_member_ids(db, project.workspace_id, data.member_ids)
         await projects_repo.set_members(db, project.id, member_ids)
-    await db.commit()
+    if "intake_email_label" in fields:
+        project.intake_email_label = data.intake_email_label
+    if "intake_form_enabled" in fields and data.intake_form_enabled is not None:
+        project.intake_form_enabled = data.intake_form_enabled
+        if data.intake_form_enabled and project.intake_slug is None:
+            project.intake_slug = _new_intake_slug(project.name)
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise ConflictError(
+            "That Gmail label is already routed to another project. Use a different label."
+        ) from exc
     await db.refresh(project)
     return await _out(db, project)
 

@@ -60,6 +60,32 @@ npm run dev                       # http://localhost:3000
 The browser only talks to the Next.js app; `/api/v1/*` is rewritten to the FastAPI backend
 (`BACKEND_URL`), so auth cookies stay first-party.
 
+## Email and form intake
+
+Emails and public form submissions become task proposals in a project's **Inbox**, where an
+admin accepts (creating a task) or rejects them. The AI drafts each one, and an admin reviews it.
+
+**Email (Gmail)**
+
+1. In TaskPilot, open **Workspace settings** and give the project a Gmail label, such as
+   `TaskPilot/Acme-Website`.
+2. In Gmail, create that label and a filter that applies it (for example to emails sent to
+   `you+acme@gmail.com`).
+3. Go to [script.google.com](https://script.google.com), create a project and paste in
+   [`scripts/apps-script/intake.gs`](scripts/apps-script/intake.gs).
+4. Under **Project Settings > Script properties**, add `WEBHOOK_URL`
+   (`https://<your-frontend>/api/v1/intake/email`) and `INTAKE_SECRET` (the same value as the
+   backend's `INTAKE_SECRET`).
+5. Run `installTrigger` once and approve the Gmail permissions. New emails under the label are
+   sent every 5 minutes and marked read once TaskPilot has them. The same email is never
+   processed twice.
+
+**Public form**
+
+Turn on the request form for a project in **Workspace settings** and share the link
+(`/intake/<random-code>`). Anyone can submit without logging in; submissions are limited to 10
+per hour per IP address.
+
 ## Checks
 
 ```bash
@@ -89,7 +115,9 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
   - [x] AI module (Groq behind a provider interface, validated JSON, usage log, daily limit) and F6 quick-add
   - [x] F7 subtask breakdown, F8 thread summary (cached until the comments change)
   - [x] F9 daily digest (8:00 AM PHT via GitHub Actions; due-tomorrow notifications)
-- [ ] Phase 3: email/form intake, smart CSV/Excel import
+- [ ] Phase 3: automation and data
+  - [x] F10 email (Gmail label + Apps Script) and public form intake into a project Inbox
+  - [ ] F11 smart CSV/Excel import
 - [ ] Phase 4: dashboard, responsive polish, deployment
 
 ## AI log
@@ -107,3 +135,4 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-29 | My Tasks grouped by the user's timezone | Used `zoneinfo` without `tzdata`, which works on Linux but has no timezone data on Windows, so "Asia/Manila" failed to load | Checked `ZoneInfo("Asia/Manila")` on the dev machine before relying on it; added `tzdata` |
 | 2026-10-29 | Comments and notifications | Relied on Postgres `now()` for `created_at`, which is the *transaction* start time, so rows written in one request (a comment and its notifications) tied and came back in random order | A notification-order test failed intermittently; timestamps are now set in Python, with the DB default as a fallback |
 | 2026-10-29 | Digest summary word limit | Enforced the 60-word limit in Pydantic's `model_post_init`, where errors are raised as plain `ValueError` instead of `ValidationError`, so a too-long AI reply would crash instead of being retried | Code review before running; moved to a `model_validator` and tested with an 80-word reply |
+| 2026-10-29 | Public request form and auth pages | Used shadcn's `CardTitle` as the page title, but it renders a `<div>`, so those pages had no heading for screen readers | A Testing Library query for the heading failed; titles are now real `<h1>` elements |

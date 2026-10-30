@@ -11,6 +11,7 @@ os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["JWT_SECRET"] = "test-jwt-secret-that-is-at-least-32-characters"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 os.environ["CRON_SECRET"] = "test-cron-secret"
+os.environ["INTAKE_SECRET"] = "test-intake-secret"
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
