@@ -3,6 +3,7 @@
 Swapping Groq for another model means writing one more class with `complete_json`.
 """
 
+import json
 import logging
 from dataclasses import dataclass
 from functools import lru_cache
@@ -91,8 +92,25 @@ class GroqProvider:
         )
 
 
+class EchoProvider:
+    """Offline stand-in for the browser test: a quick-add request comes back as a
+    draft with that text as its title. Other features get no usable answer."""
+
+    model = "echo"
+
+    async def complete_json(self, system: str, messages: list[Message]) -> Completion:
+        try:
+            request = json.loads(messages[0].content).get("REQUEST", "")
+        except ValueError, AttributeError, IndexError:
+            request = ""
+        text = json.dumps({"title": str(request)[:200]} if request else {})
+        return Completion(text=text, model=self.model, input_tokens=0, output_tokens=0)
+
+
 @lru_cache
 def get_provider() -> AIProvider:
     settings = get_settings()
+    if settings.ai_provider == "echo":
+        return EchoProvider()
     key = settings.groq_api_key.get_secret_value() if settings.groq_api_key else None
     return GroqProvider(api_key=key, model=settings.ai_model, timeout=settings.ai_timeout_seconds)

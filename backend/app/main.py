@@ -9,6 +9,7 @@ from app.routers import (
     ai,
     auth,
     comments,
+    dashboard,
     digest,
     health,
     imports,
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(tasks.router, prefix=API_PREFIX)
     app.include_router(comments.router, prefix=API_PREFIX)
+    app.include_router(dashboard.router, prefix=API_PREFIX)
     app.include_router(ai.router, prefix=API_PREFIX)
     app.include_router(digest.router, prefix=API_PREFIX)
     app.include_router(intake.router, prefix=API_PREFIX)

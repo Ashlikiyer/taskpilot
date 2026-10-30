@@ -67,3 +67,10 @@ class ThreadSummaryOut(ThreadSummary):
     generated_at: datetime
     # True when the saved summary was returned without calling the AI.
     cached: bool
+
+
+class AIUsageOut(BaseModel):
+    """The current user's AI calls today; resets at midnight in the app timezone."""
+
+    used: int
+    limit: int

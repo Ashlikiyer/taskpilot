@@ -1,6 +1,7 @@
 import uuid
+from collections.abc import Iterable
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Comment, User
@@ -33,3 +34,15 @@ async def create(
 
 async def delete_comment(db: AsyncSession, comment: Comment) -> None:
     await db.execute(delete(Comment).where(Comment.id == comment.id))
+
+
+async def counts_by_task(db: AsyncSession, task_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, int]:
+    ids = list(task_ids)
+    if not ids:
+        return {}
+    result = await db.execute(
+        select(Comment.task_id, func.count())
+        .where(Comment.task_id.in_(ids))
+        .group_by(Comment.task_id)
+    )
+    return {task_id: count for task_id, count in result.all()}

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     # Without a key the app still runs; AI endpoints answer 502 AI_UNAVAILABLE.
     groq_api_key: SecretStr | None = None
     ai_model: str = "openai/gpt-oss-20b"
+    # "echo" answers quick-add offline (the request becomes the title). Only for the
+    # end-to-end test in CI; never set it in production.
+    ai_provider: Literal["groq", "echo"] = "groq"
     ai_timeout_seconds: float = 20.0
     # Shared secret for POST /internal/digest/run (GitHub Actions). Unset = endpoint disabled.
     cron_secret: SecretStr | None = None
