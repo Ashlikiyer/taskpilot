@@ -25,9 +25,9 @@ from app.services.dates import user_today
 logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 2  # the first try plus one retry with the validation error
-# Calls the system makes on a user's behalf (the daily digest) are logged but don't
+# Calls the system makes on a user's behalf (digest, intake) are logged but don't
 # use up that user's personal daily limit.
-SYSTEM_FEATURES = frozenset({"digest"})
+SYSTEM_FEATURES = frozenset({"digest", "intake"})
 
 
 def ai_unavailable() -> AppError:

@@ -80,10 +80,10 @@ async def quick_add(
         prompt=json.dumps(context, ensure_ascii=False),
         schema=QuickAddDraft,
     )
-    return _check_draft(draft, members, projects, labels, data.default_project_id, today)
+    return check_draft(draft, members, projects, labels, data.default_project_id, today)
 
 
-def _check_draft(
+def check_draft(
     draft: QuickAddDraft,
     members: dict[uuid.UUID, str],
     projects: dict[uuid.UUID, str],

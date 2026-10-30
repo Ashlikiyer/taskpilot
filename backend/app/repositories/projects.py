@@ -93,3 +93,13 @@ async def search_by_name(
         .limit(limit)
     )
     return list(result.scalars())
+
+
+async def get_by_intake_label(db: AsyncSession, label: str) -> Project | None:
+    result = await db.execute(select(Project).where(Project.intake_email_label == label))
+    return result.scalar_one_or_none()
+
+
+async def get_by_intake_slug(db: AsyncSession, slug: str) -> Project | None:
+    result = await db.execute(select(Project).where(Project.intake_slug == slug))
+    return result.scalar_one_or_none()
