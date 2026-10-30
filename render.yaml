@@ -1,0 +1,29 @@
+# Render blueprint for the API: New > Blueprint, pick this repo.
+# Values marked `sync: false` are asked for once in the dashboard and never stored here.
+services:
+  - type: web
+    name: taskpilot-api
+    runtime: docker
+    plan: free
+    region: singapore # closest Render region to the Philippines
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL # Supabase session pooler URL (port 5432)
+        sync: false
+      - key: FRONTEND_ORIGIN # the Vercel URL, e.g. https://taskpilot.vercel.app
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CRON_SECRET # also a GitHub Actions secret for the daily digest
+        generateValue: true
+      - key: INTAKE_SECRET # also a script property in the Gmail Apps Script
+        generateValue: true
+      - key: AI_MODEL
+        value: openai/gpt-oss-20b
+      - key: APP_TIMEZONE
+        value: Asia/Manila
