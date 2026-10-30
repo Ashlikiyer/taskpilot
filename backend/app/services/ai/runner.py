@@ -36,13 +36,18 @@ def ai_unavailable() -> AppError:
     )
 
 
-async def _check_daily_limit(db: AsyncSession, user: User) -> None:
-    settings = get_settings()
-    zone = settings.app_timezone
+async def used_today(db: AsyncSession, user: User) -> int:
+    """AI calls that count toward the user's daily limit since midnight (app timezone)."""
+    zone = get_settings().app_timezone
     midnight = datetime.combine(user_today(zone), day_start(0), tzinfo=ZoneInfo(zone))
-    used = await ai_usage_repo.count_since(
+    return await ai_usage_repo.count_since(
         db, user.id, midnight.astimezone(UTC), exclude_features=SYSTEM_FEATURES
     )
+
+
+async def _check_daily_limit(db: AsyncSession, user: User) -> None:
+    settings = get_settings()
+    used = await used_today(db, user)
     if used >= settings.ai_daily_limit_per_user:
         raise AppError(
             429,

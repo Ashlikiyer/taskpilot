@@ -1,80 +1,111 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { EmptyState, ErrorState } from "@/components/states";
-import { Badge } from "@/components/ui/badge";
+import { ErrorState } from "@/components/states";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMenu } from "@/components/user-menu";
 import { CreateWorkspaceDialog } from "@/components/workspaces/create-workspace-dialog";
+import { useLogout, useMe } from "@/hooks/use-auth";
 import { useWorkspaces } from "@/hooks/use-workspaces";
 import { ROLE_LABELS } from "@/lib/roles";
 
+// Tile colors from the design, picked by position.
+const TILE_COLORS = ["#1c1c20", "#6847e0", "#2f9e5b", "#3b6fe0", "#d97a1f"];
+
 export default function WorkspacePickerPage() {
+  const router = useRouter();
+  const me = useMe();
+  const logout = useLogout();
   const workspaces = useWorkspaces();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Your workspaces
-          </h1>
+    <main className="flex flex-1 flex-col items-center justify-center gap-7 px-4 py-12">
+      <div className="grid gap-1.5 text-center">
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em]">
+          Choose a workspace
+        </h1>
+        {me.data && (
           <p className="text-sm text-muted-foreground">
-            Pick a workspace or create a new one.
+            Signed in as {me.data.email}
           </p>
-        </div>
-        {workspaces.data && workspaces.data.length > 0 && (
-          <CreateWorkspaceDialog />
         )}
-      </header>
+      </div>
 
-      {workspaces.isPending && (
-        <div className="grid gap-3" aria-busy>
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-        </div>
-      )}
+      <div className="w-full max-w-[480px] overflow-hidden rounded-xl border bg-card">
+        {workspaces.isPending && (
+          <div className="grid gap-px" aria-busy>
+            <Skeleton className="m-4 h-9" />
+            <Skeleton className="m-4 h-9" />
+          </div>
+        )}
 
-      {workspaces.isError && (
-        <ErrorState
-          message="We couldn't load your workspaces."
-          onRetry={() => workspaces.refetch()}
-        />
-      )}
+        {workspaces.isError && (
+          <ErrorState
+            message="We couldn't load your workspaces."
+            onRetry={() => workspaces.refetch()}
+          />
+        )}
 
-      {workspaces.data?.length === 0 && (
-        <EmptyState
-          title="You're not in any workspace yet"
-          description="Create one for your team, or ask an admin to send you an invite link."
-          action={<CreateWorkspaceDialog />}
-        />
-      )}
+        {workspaces.data?.length === 0 && (
+          <div className="grid gap-1 border-b border-[#f0f0ec] px-[18px] py-5 text-center">
+            <p className="font-medium">You&apos;re not in any workspace yet</p>
+            <p className="text-sm text-muted-foreground">
+              Create one for your team, or ask an admin to send you an invite
+              link.
+            </p>
+          </div>
+        )}
 
-      {workspaces.data && workspaces.data.length > 0 && (
-        <ul className="grid gap-3">
-          {workspaces.data.map((workspace) => (
-            <li key={workspace.id}>
-              <Link
-                href={`/w/${workspace.slug}`}
-                className="flex items-center gap-3 rounded-xl border p-4 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary font-semibold text-primary-foreground">
-                  {workspace.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {workspace.name}
-                </span>
-                <Badge variant="secondary">{ROLE_LABELS[workspace.role]}</Badge>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+        {workspaces.data && workspaces.data.length > 0 && (
+          <ul>
+            {workspaces.data.map((workspace, index) => (
+              <li key={workspace.id} className="border-b border-[#f0f0ec]">
+                <Link
+                  href={`/w/${workspace.slug}`}
+                  className="flex items-center gap-3.5 px-[18px] py-4 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                >
+                  <span
+                    aria-hidden
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[9px] text-[13px] font-semibold text-white"
+                    style={{
+                      backgroundColor: TILE_COLORS[index % TILE_COLORS.length],
+                    }}
+                  >
+                    {workspace.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="truncate text-sm font-semibold">
+                      {workspace.name}
+                    </span>
+                    <span className="truncate text-[12.5px] text-[#77777c]">
+                      /w/{workspace.slug}
+                    </span>
+                  </span>
+                  <span className="rounded-full border px-2 py-0.5 text-[11.5px] text-[#55555b]">
+                    {ROLE_LABELS[workspace.role]}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      <footer className="mt-auto border-t pt-4">
-        <UserMenu />
-      </footer>
+        {!workspaces.isError && <CreateWorkspaceDialog asRow />}
+      </div>
+
+      <button
+        type="button"
+        className="text-[13px] text-muted-foreground hover:text-foreground hover:underline"
+        disabled={logout.isPending}
+        onClick={() =>
+          logout.mutate(undefined, {
+            onSettled: () => router.replace("/login"),
+          })
+        }
+      >
+        Log out
+      </button>
     </main>
   );
 }

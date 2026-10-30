@@ -17,6 +17,7 @@ from app.db.models import (
     User,
 )
 from app.repositories import activity as activity_repo
+from app.repositories import comments as comments_repo
 from app.repositories import labels as labels_repo
 from app.repositories import projects as projects_repo
 from app.repositories import tasks as tasks_repo
@@ -129,6 +130,7 @@ async def to_outs(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
     ids = [task.id for task in tasks]
     labels = await labels_repo.labels_by_task(db, ids)
     counts = await tasks_repo.subtask_counts(db, ids)
+    comment_counts = await comments_repo.counts_by_task(db, ids)
     return [
         TaskOut(
             id=task.id,
@@ -147,6 +149,7 @@ async def to_outs(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
             labels=[LabelOut(id=lb.id, name=lb.name, color=lb.color) for lb in labels[task.id]],
             subtask_count=counts.get(task.id, (0, 0))[0],
             subtasks_done=counts.get(task.id, (0, 0))[1],
+            comment_count=comment_counts.get(task.id, 0),
             created_at=task.created_at,
             updated_at=task.updated_at,
         )

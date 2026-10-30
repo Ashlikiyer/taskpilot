@@ -1,17 +1,15 @@
 "use client";
 
-import { CalendarIcon, SparklesIcon } from "lucide-react";
-
 import { EmptyState, ErrorState } from "@/components/states";
+import { PriorityPill } from "@/components/task-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDigestToday } from "@/hooks/use-ai";
+import { useMe } from "@/hooks/use-auth";
 import { useTaskParam } from "@/hooks/use-task-param";
 import { useCurrentWorkspace } from "@/hooks/use-workspaces";
 import type { Schemas } from "@/lib/api/client";
 import {
   formatDueDate,
-  PRIORITY_CLASS,
-  PRIORITY_LABEL,
   STATUS_LABEL,
   type TaskPriority,
   type TaskStatus,
@@ -21,13 +19,9 @@ import { cn } from "@/lib/utils";
 type DigestTask = Schemas["DigestTask"];
 
 const GROUPS = [
-  { key: "overdue", title: "Overdue", tone: "text-destructive" },
-  { key: "due_today", title: "Due today", tone: "" },
-  {
-    key: "at_risk",
-    title: "At risk",
-    tone: "text-amber-700 dark:text-amber-400",
-  },
+  { key: "overdue", title: "Overdue", dot: "bg-[#d9443a]" },
+  { key: "due_today", title: "Due today", dot: "bg-foreground" },
+  { key: "at_risk", title: "At risk", dot: "bg-status-in-review" },
 ] as const;
 
 const REASON: Record<string, string> = {
@@ -35,10 +29,18 @@ const REASON: Record<string, string> = {
   stalled: "In progress, no activity for 5 days",
 };
 
+function greeting(now: Date = new Date()): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function DigestPage() {
   const { workspace } = useCurrentWorkspace();
   const isViewer = workspace?.role === "viewer";
   const digest = useDigestToday(isViewer ? undefined : workspace?.id);
+  const me = useMe();
   const [, openTask] = useTaskParam();
   if (!workspace) return null;
 
@@ -50,15 +52,20 @@ export default function DigestPage() {
     : 0;
 
   return (
-    <div className="grid max-w-3xl gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Today&apos;s digest
-        </h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="grid max-w-[1100px] gap-6">
+      <header className="grid gap-1.5">
+        <p className="font-mono text-xs text-subtle uppercase">
           {digest.data
-            ? `${formatDueDate(digest.data.date)} · built every morning at 8:00 AM`
-            : "Overdue, due today and at-risk tasks assigned to you."}
+            ? `${formatDueDate(digest.data.date).replace(",", " ·")} · 8:00 AM`
+            : "Today's digest"}
+        </p>
+        <h1 className="text-[30px] font-semibold tracking-[-0.02em]">
+          {greeting()}
+          {me.data?.name ? `, ${me.data.name.split(" ")[0]}` : ""}
+        </h1>
+        <p className="sr-only">
+          Your daily digest: overdue, due today and at-risk tasks assigned to
+          you, built every morning at 8:00 AM.
         </p>
       </header>
 
@@ -92,15 +99,17 @@ export default function DigestPage() {
       {digest.data && total > 0 && (
         <>
           <DigestSummary summary={digest.data.summary} />
-          {GROUPS.map(({ key, title, tone }) => (
-            <DigestGroup
-              key={key}
-              title={title}
-              tone={tone}
-              tasks={digest.data.content[key] ?? []}
-              onOpen={openTask}
-            />
-          ))}
+          <div className="grid gap-4 md:grid-cols-3">
+            {GROUPS.map(({ key, title, dot }) => (
+              <DigestGroup
+                key={key}
+                title={title}
+                dot={dot}
+                tasks={digest.data.content[key] ?? []}
+                onOpen={openTask}
+              />
+            ))}
+          </div>
           <p className="text-xs text-muted-foreground">
             This is a snapshot from when the digest was built. Open a task to
             see it as it is now.
@@ -116,83 +125,77 @@ function DigestSummary({ summary }: { summary: string | null }) {
   return (
     <section
       aria-label="Summary"
-      className="flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4"
+      className="grid gap-2.5 rounded-xl border border-ai-border bg-[#f7f5fe] px-[22px] py-5"
     >
-      <SparklesIcon
-        className="mt-0.5 size-4 shrink-0 text-primary"
-        aria-hidden
-      />
-      <p className="text-sm leading-relaxed">{summary}</p>
+      <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.04em] text-ai">
+        <span aria-hidden>✦</span>AI SUMMARY
+      </p>
+      <p className="text-[17px] leading-relaxed text-pretty text-ai-ink">
+        {summary}
+      </p>
+      <p className="text-[11.5px] text-ai-muted">
+        The task lists below come from your data. The AI writes only this
+        paragraph.
+      </p>
     </section>
   );
 }
 
 function DigestGroup({
   title,
-  tone,
+  dot,
   tasks,
   onOpen,
 }: {
   title: string;
-  tone: string;
+  dot: string;
   tasks: DigestTask[];
   onOpen: (taskId: string) => void;
 }) {
-  if (tasks.length === 0) return null;
   return (
     <section
       aria-label={`${title}, ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
+      className="flex flex-col overflow-hidden rounded-xl border bg-card"
     >
-      <h2
-        className={cn(
-          "mb-1 flex items-center gap-2 px-3 text-sm font-medium",
-          tone,
-        )}
-      >
+      <h2 className="flex items-center gap-2 border-b border-[#f0f0ec] px-4 py-3.5 text-sm font-semibold">
+        <span aria-hidden className={cn("size-2 rounded-full", dot)} />
         {title}
-        <span className="text-muted-foreground">{tasks.length}</span>
+        <span className="ml-auto font-mono text-xs font-normal text-subtle">
+          {tasks.length}
+        </span>
       </h2>
-      <ul className="grid divide-y rounded-xl border">
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(task.id)}
-              className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <span className="min-w-0 flex-1 basis-48">
-                <span className="block truncate text-sm">{task.title}</span>
-                {task.reason && (
-                  <span className="block text-xs text-muted-foreground">
-                    {REASON[task.reason]}
+      {tasks.length === 0 ? (
+        <p className="px-4 py-3 text-[13px] text-subtle">Nothing here.</p>
+      ) : (
+        <ul className="divide-y divide-[#f4f4f1]">
+          {tasks.map((task) => (
+            <li key={task.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(task.id)}
+                className="grid w-full gap-1 px-4 py-3 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+              >
+                <span className="flex items-start gap-2">
+                  <span className="flex-1 text-[13.5px] font-medium">
+                    {task.title}
                   </span>
-                )}
-              </span>
-              <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="max-w-36 truncate">{task.project_name}</span>
-                <span>
-                  {STATUS_LABEL[task.status as TaskStatus] ?? task.status}
+                  <PriorityPill priority={task.priority as TaskPriority} />
                 </span>
-                {task.due_date && (
-                  <span className="flex items-center gap-1">
-                    <CalendarIcon className="size-3.5" aria-hidden />
-                    {formatDueDate(task.due_date)}
-                  </span>
-                )}
-                <span
-                  className={cn(
-                    "rounded px-1.5 py-0.5",
-                    PRIORITY_CLASS[task.priority as TaskPriority],
-                  )}
-                >
-                  {PRIORITY_LABEL[task.priority as TaskPriority] ??
-                    task.priority}
+                <span className="text-xs text-[#77777c]">
+                  {task.project_name}
+                  {" · "}
+                  {task.reason
+                    ? REASON[task.reason]
+                    : task.due_date
+                      ? `due ${formatDueDate(task.due_date)}`
+                      : (STATUS_LABEL[task.status as TaskStatus] ??
+                        task.status)}
                 </span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

@@ -29,11 +29,34 @@ export const PRIORITY_LABEL = Object.fromEntries(
 ) as Record<TaskPriority, string>;
 
 export const PRIORITY_CLASS: Record<TaskPriority, string> = {
-  low: "bg-muted text-muted-foreground",
-  medium: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  high: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  urgent: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
+  low: "bg-priority-low-soft text-priority-low",
+  medium: "bg-priority-medium-soft text-priority-medium",
+  high: "bg-priority-high-soft text-priority-high",
+  urgent: "bg-priority-urgent-soft text-priority-urgent",
 };
+
+/** The dot next to a status name; Tailwind needs the full class names. */
+export const STATUS_DOT_CLASS: Record<TaskStatus, string> = {
+  todo: "bg-status-todo",
+  in_progress: "bg-status-in-progress",
+  in_review: "bg-status-in-review",
+  done: "bg-status-done",
+};
+
+/** A due date before today (calendar days, in the browser's timezone). */
+export function isOverdue(
+  task: Pick<Task, "due_date" | "status">,
+  today: Date = new Date(),
+): boolean {
+  if (!task.due_date || task.status === "done") return false;
+  const [year, month, day] = task.due_date.split("-").map(Number);
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  return new Date(year, month - 1, day) < start;
+}
 
 export function groupByStatus(tasks: Task[]): Record<TaskStatus, Task[]> {
   const groups: Record<TaskStatus, Task[]> = {

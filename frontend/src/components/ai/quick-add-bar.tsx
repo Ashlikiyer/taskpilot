@@ -1,14 +1,15 @@
 "use client";
 
-import { PlusIcon, SparklesIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { usageNote } from "@/components/ai/create-with-ai";
 import { QuickAddPreview } from "@/components/ai/quick-add-preview";
+import { Sparkle } from "@/components/task-ui";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMe } from "@/hooks/use-auth";
-import { useQuickAdd } from "@/hooks/use-ai";
+import { useAIUsage, useQuickAdd } from "@/hooks/use-ai";
 import { useProjects } from "@/hooks/use-projects";
 import { useCreateTask, useCreateTaskIn, useLabels } from "@/hooks/use-tasks";
 import { useMembers } from "@/hooks/use-workspaces";
@@ -34,6 +35,7 @@ export function QuickAddBar({
   const members = useMembers(workspace.id);
   const labels = useLabels(workspace.id);
   const quickAdd = useQuickAdd(workspace.id);
+  const usage = useAIUsage();
   const createTask = useCreateTask(project.id);
   const createTaskIn = useCreateTaskIn();
 
@@ -74,24 +76,41 @@ export function QuickAddBar({
 
   return (
     <>
-      <form onSubmit={addAsWritten} className="flex flex-wrap gap-2">
-        <Input
+      <form
+        onSubmit={addAsWritten}
+        className="flex min-h-[42px] flex-wrap items-center gap-x-2.5 gap-y-1 rounded-[10px] border border-ai-border bg-card py-1 pr-1.5 pl-3.5 shadow-[0_0_0_4px_var(--ai-soft)] focus-within:border-ai"
+      >
+        <Sparkle className="text-sm" />
+        <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder='Add a task, or describe it: "Ask Mark to send the invoice by Friday"'
+          placeholder='Add a task, or describe it: "Ask Jen to review the pricing copy tomorrow"'
           aria-label="New task"
           maxLength={500}
           disabled={busy}
-          className="min-w-0 flex-1 basis-64"
+          className="h-8 min-w-0 flex-1 basis-56 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
         />
-        <Button type="submit" variant="outline" disabled={!text.trim() || busy}>
-          <PlusIcon />
-          Add
-        </Button>
-        <Button type="button" onClick={askAI} disabled={!text.trim() || busy}>
-          <SparklesIcon />
-          {quickAdd.isPending ? "Drafting…" : "Create with AI"}
-        </Button>
+        <span className="flex gap-1.5">
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            disabled={!text.trim() || busy}
+            title="Add the text as the task title"
+          >
+            <PlusIcon />
+            Add
+          </Button>
+          <Button
+            type="button"
+            variant="ai"
+            size="sm"
+            onClick={askAI}
+            disabled={!text.trim() || busy}
+          >
+            {quickAdd.isPending ? "Drafting…" : "Create with AI"}
+          </Button>
+        </span>
       </form>
 
       <QuickAddPreview
@@ -100,6 +119,7 @@ export function QuickAddBar({
         members={members.data ?? []}
         labels={labels.data ?? []}
         saving={createTaskIn.isPending}
+        usageNote={usageNote(usage.data)}
         error={
           createTaskIn.isError ? errorMessage(createTaskIn.error) : undefined
         }

@@ -198,3 +198,20 @@ async def test_confirmed_draft_is_saved_with_ai_source(
 
     assert response.json()["source"] == "ai_quick_add"
     assert spoofed.status_code == 400  # intake/import sources are server-only
+
+
+async def test_usage_counts_todays_personal_ai_calls(
+    client: AsyncClient, db_session: AsyncSession, fake_ai: FakeProvider
+) -> None:
+    w = await _world(db_session, client)
+    fake_ai.reply({"title": "Task"})
+    fake_ai.reply({"title": "Task"})
+    await _quick_add(client, w, w.mark)
+    await _quick_add(client, w, w.mark)
+
+    mine = await client.get("/api/v1/ai/usage", headers=auth_headers(w.mark))
+    theirs = await client.get("/api/v1/ai/usage", headers=auth_headers(w.owner))
+
+    assert mine.json() == {"used": 2, "limit": 50}
+    assert theirs.json() == {"used": 0, "limit": 50}
+    assert (await client.get("/api/v1/ai/usage")).status_code == 401

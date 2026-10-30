@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar } from "@/components/task-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSetProjectArchived } from "@/hooks/use-projects";
@@ -26,9 +27,9 @@ export function ProjectHeader({
   const canManage = hasRole(workspace.role, "admin");
   const archived = project.archived_at !== null;
 
-  const memberNames = (members.data ?? [])
-    .filter((m) => project.member_ids.includes(m.user_id))
-    .map((m) => m.name);
+  const projectMembers = (members.data ?? []).filter((m) =>
+    project.member_ids.includes(m.user_id),
+  );
 
   const toggleArchived = (next: boolean) =>
     setArchived.mutate(next, {
@@ -45,7 +46,7 @@ export function ProjectHeader({
     });
 
   return (
-    <header className="grid gap-4">
+    <header className="grid gap-3">
       {archived && (
         <Alert>
           <AlertDescription>
@@ -58,43 +59,67 @@ export function ProjectHeader({
         <div className="flex min-w-0 items-start gap-3">
           <span
             aria-hidden
-            className="mt-2 size-3 shrink-0 rounded-full"
+            className="mt-[7px] h-[11px] w-3.5 shrink-0 rounded-[2px_3px_3px_3px]"
             style={{ backgroundColor: project.color }}
           />
-          <div className="min-w-0">
-            <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
+          <div className="grid min-w-0 gap-0.5">
+            <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-[-0.015em]">
               <span className="break-words">{project.name}</span>
               {archived && <Badge variant="secondary">Archived</Badge>}
             </h1>
-            {project.description && (
-              <p className="mt-1 max-w-2xl whitespace-pre-line text-muted-foreground">
-                {project.description}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-muted-foreground">
-              {memberNames.length > 0
-                ? `Members: ${memberNames.join(", ")}`
-                : "No members yet"}
+            <p className="text-[12.5px] text-subtle">
+              {projectMembers.length === 1
+                ? "1 member"
+                : `${projectMembers.length} members`}
+              {project.description && (
+                <span className="whitespace-pre-line">
+                  {" "}
+                  · {project.description}
+                </span>
+              )}
             </p>
           </div>
         </div>
 
-        {canManage && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <PencilIcon />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              disabled={setArchived.isPending}
-              onClick={() => toggleArchived(!archived)}
+        <div className="flex items-center gap-3">
+          {projectMembers.length > 0 && (
+            <ul
+              aria-label={`Members: ${projectMembers.map((m) => m.name).join(", ")}`}
+              className="flex pl-[7px]"
             >
-              {archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
-              {archived ? "Restore" : "Archive"}
-            </Button>
-          </div>
-        )}
+              {projectMembers.slice(0, 6).map((m) => (
+                <li key={m.user_id} className="-ml-[7px]">
+                  <Avatar
+                    name={m.name}
+                    id={m.user_id}
+                    className="border-2 border-background"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          {canManage && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(true)}
+              >
+                <PencilIcon />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={setArchived.isPending}
+                onClick={() => toggleArchived(!archived)}
+              >
+                {archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+                {archived ? "Restore" : "Archive"}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {canManage && (

@@ -27,8 +27,11 @@ const schema = z.object({
 
 export function CreateWorkspaceDialog({
   trigger = "Create workspace",
+  asRow = false,
 }: {
   trigger?: string;
+  /** The last row of the workspace list (dashed "+" tile) instead of a button. */
+  asRow?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -62,7 +65,19 @@ export function CreateWorkspaceDialog({
         if (!next) createWorkspace.reset();
       }}
     >
-      <DialogTrigger render={<Button />}>{trigger}</DialogTrigger>
+      {asRow ? (
+        <DialogTrigger className="flex w-full items-center gap-3.5 px-[18px] py-4 text-left text-sm font-medium text-ai hover:bg-ai-wash focus-visible:bg-ai-wash focus-visible:outline-none">
+          <span
+            aria-hidden
+            className="flex size-9 items-center justify-center rounded-[9px] border border-dashed border-[#c9bdf6] text-lg"
+          >
+            +
+          </span>
+          {trigger}
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger render={<Button />}>{trigger}</DialogTrigger>
+      )}
       <DialogContent>
         <form onSubmit={submit} noValidate className="grid gap-4">
           <DialogHeader>

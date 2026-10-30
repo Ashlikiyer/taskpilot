@@ -2,12 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Light theme only (per the design); `dark:` classes apply only under a .dark class, which is never set. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -39,6 +40,33 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Everything the AI proposes is violet (design: "a violet AI layer"). */
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-wash: var(--ai-wash);
+  --color-ai-border: var(--ai-border);
+  --color-ai-ink: var(--ai-ink);
+  --color-ai-muted: var(--ai-muted);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-warning-ink: var(--warning-ink);
+  --color-overdue: var(--overdue);
+  --color-status-todo: var(--status-todo);
+  --color-status-in-progress: var(--status-in-progress);
+  --color-status-in-review: var(--status-in-review);
+  --color-status-done: var(--status-done);
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-urgent-soft: var(--priority-urgent-soft);
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-soft: var(--priority-high-soft);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-medium-soft: var(--priority-medium-soft);
+  --color-priority-low: var(--priority-low);
+  --color-priority-low-soft: var(--priority-low-soft);
+  --color-subtle: var(--subtle);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,72 +77,66 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Warm neutral surfaces with 1px hairlines; green for actions. */
+  --background: #fbfbfa;
+  --foreground: #1c1c20;
+  --card: #ffffff;
+  --card-foreground: #1c1c20;
+  --popover: #ffffff;
+  --popover-foreground: #1c1c20;
+  --primary: #23864a;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f2;
+  --secondary-foreground: #1c1c20;
+  --muted: #f4f4f1;
+  --muted-foreground: #6b6b70;
+  --subtle: #8a8a90;
+  --accent: #f2f2ef;
+  --accent-foreground: #1c1c20;
+  --destructive: #b23a30;
+  --border: #e6e6e2;
+  --input: #dcdcd8;
+  --ring: #6847e0;
+  --chart-1: #23864a;
+  --chart-2: #bcdcc6;
+  --chart-3: #d6e9dc;
+  --chart-4: #3b6fe0;
+  --chart-5: #c98a12;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  --sidebar: #ffffff;
+  --sidebar-foreground: #4a4a50;
+  --sidebar-primary: #23864a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf5ee;
+  --sidebar-accent-foreground: #1c6b3b;
+  --sidebar-border: #ececea;
+  --sidebar-ring: #6847e0;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ai: #6847e0;
+  --ai-foreground: #ffffff;
+  --ai-soft: #f3f0fd;
+  --ai-wash: #faf8ff;
+  --ai-border: #ddd5fa;
+  --ai-ink: #2a1f5e;
+  --ai-muted: #6a5aa8;
+  --success-soft: #eaf5ee;
+  --success-ink: #1c6b3b;
+  --warning-soft: #fdf6e7;
+  --warning-border: #f3e2b8;
+  --warning-ink: #7a5a10;
+  --overdue: #b23a30;
+  --status-todo: #a1a1a6;
+  --status-in-progress: #3b6fe0;
+  --status-in-review: #c98a12;
+  --status-done: #2f9e5b;
+  --priority-urgent: #b23a30;
+  --priority-urgent-soft: #fbe4e2;
+  --priority-high: #a85a12;
+  --priority-high-soft: #fdf0e4;
+  --priority-medium: #4a5578;
+  --priority-medium-soft: #eef0f6;
+  --priority-low: #6b6b70;
+  --priority-low-soft: #f2f2ef;
 }
 
 @layer base {
@@ -126,5 +148,6 @@
   }
   html {
     @apply font-sans;
+    -webkit-font-smoothing: antialiased;
   }
 }

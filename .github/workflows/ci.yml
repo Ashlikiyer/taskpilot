@@ -56,3 +56,54 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
+  e2e:
+    # The spec's smoke test in a real browser, after both test jobs pass.
+    needs: [backend, frontend]
+    # Pinned: Playwright 1.56 has no browser builds for Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: taskpilot_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/taskpilot_e2e
+      JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else
+      AI_PROVIDER: echo # quick-add answers offline: no Groq key, no cost
+      RATE_LIMIT_ENABLED: "false" # the test (and its retry) registers a new user each run
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run alembic upgrade head
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7

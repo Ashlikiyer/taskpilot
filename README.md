@@ -44,8 +44,13 @@ cd backend
 uv sync
 cp .env.example .env              # fill in values
 uv run alembic upgrade head
+uv run python ../scripts/seed.py  # optional: the "Acme Studio" demo workspace
 uv run fastapi dev app/main.py    # http://localhost:8000/docs
 ```
+
+The seed script creates a demo workspace with five people, four projects, eight weeks of
+completed work and a few Inbox requests. Log in as `demo@taskpilot.dev` / `taskpilot-demo`.
+Running it again replaces the demo workspace.
 
 **Frontend**
 
@@ -117,6 +122,16 @@ real model (uses your Groq quota), set `GROQ_API_KEY` in `backend/.env` and run:
 cd backend && uv run pytest -m live_ai -rP
 ```
 
+The Playwright smoke test (register → workspace → project → quick-add → drag to Done → My
+Tasks) runs in a real browser against the real backend. Locally it reuses the servers you
+already have running; CI starts both with `AI_PROVIDER=echo`, an offline stand-in that turns
+the quick-add sentence into the draft title, so the test needs no Groq key.
+
+```bash
+cd frontend && npx playwright install chromium   # once
+npm run e2e
+```
+
 CI runs the same checks on every pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Roadmap
@@ -135,7 +150,12 @@ CI runs the same checks on every pull request ([.github/workflows/ci.yml](.githu
 - [x] Phase 3: automation and data
   - [x] F10 email (Gmail label + Apps Script) and public form intake into a project Inbox
   - [x] F11 smart CSV/Excel import (AI column mapping, preview with row warnings, all-or-nothing run)
-- [ ] Phase 4: dashboard, responsive polish, deployment
+- [ ] Phase 4: polish and deployment
+  - [x] UI redesign from the Claude Design screens: warm neutral surfaces, green actions and a violet layer for everything the AI proposes; global "Create with AI" (Ctrl/Cmd+J)
+  - [x] F12 dashboard: open by status, overdue (vs last week), completed per week, workload, share created by AI, per-project filter
+  - [x] F13 responsive at 375 px: menu sheet, bottom tab bar, horizontal board, bottom-sheet quick-add
+  - [x] Demo seed script and Playwright smoke test in CI
+  - [ ] Deployment (Supabase, Render, Vercel)
 
 ## AI log
 
@@ -157,3 +177,7 @@ How AI coding assistants were used on this project, and how their mistakes were 
 | 2026-10-30 | AI column mapping for imports | The live model mapped `P2` to Medium and `P3` to High, and gave no date format for `11/05/2026` | The live AI test against the sample file; well-known values now override the AI and the date format is inferred in code |
 | 2026-10-30 | Skipped-rows CSV download | Prettier turned the `"\uFEFF"` escape into an invisible literal BOM in the source | Noticed in the diff; the BOM is now built with `String.fromCharCode(0xfeff)` |
 | 2026-10-30 | Local end-to-end test | An orphaned `fastapi dev` worker kept serving old code on port 8000, so a fix looked like it didn't work | Two listeners showed in `netstat`; stopped the orphan and re-ran |
+| 2026-10-30 | Theme tokens for the redesign | The generated theme mapped `--font-sans` to itself, so the app had silently been using the browser's default font instead of Geist | Screenshots against the design didn't match; the token now points at the Geist variable |
+| 2026-10-30 | Wider task drawer | Set `sm:max-w-[600px]`, but shadcn's sheet sets its width with a `data-[side=right]:` variant that class merging doesn't override, so the drawer stayed 384 px (and overflowed on phones) | Playwright screenshots at 1280 and 375 px; fixed with the same variant |
+| 2026-10-30 | Task links (`?task=<id>`) | An empty `?task=` opened the drawer and showed "Loading" forever | Found through a screenshot script that dropped the id; an empty value now means no task, with a test |
+| 2026-10-30 | Playwright smoke test | Passed locally but failed in CI: it pressed drag keys faster than dnd-kit reacted on a fast machine, and Next 16 keeps the previous page mounted (hidden), so a task title matched twice | Ran the test 10 times against a production build; it now waits for each drag announcement and matches elements more precisely |

@@ -84,6 +84,7 @@ class TaskOut(BaseModel):
     labels: list[LabelOut]
     subtask_count: int
     subtasks_done: int
+    comment_count: int = 0
     created_at: datetime
     updated_at: datetime
 

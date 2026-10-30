@@ -28,6 +28,7 @@ import {
   SortableTaskCard,
   StaticTaskCard,
 } from "@/components/board/task-card";
+import { StatusDot } from "@/components/task-ui";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskParam } from "@/hooks/use-task-param";
@@ -178,7 +179,7 @@ export function TaskBoard({
 
   const board = (
     <div
-      className="flex gap-4 overflow-x-auto pb-4"
+      className="-mx-4 flex snap-x scroll-px-4 gap-3.5 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0"
       role="list"
       aria-label="Board columns"
     >
@@ -194,7 +195,7 @@ export function TaskBoard({
             items={columns[status].map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="grid min-h-16 gap-2">
+            <ul className="grid min-h-16 content-start gap-2.5">
               {columns[status].map((task) => {
                 const props = {
                   task,
@@ -252,6 +253,14 @@ export function TaskBoard({
   );
 }
 
+// The design marks each column header with a 2px line in its status color.
+const COLUMN_TOP_LINE: Record<Task["status"], string> = {
+  todo: "shadow-[inset_0_2px_0_var(--status-todo)]",
+  in_progress: "shadow-[inset_0_2px_0_var(--status-in-progress)]",
+  in_review: "shadow-[inset_0_2px_0_var(--status-in-review)]",
+  done: "shadow-[inset_0_2px_0_var(--status-done)]",
+};
+
 function BoardColumn({
   status,
   label,
@@ -270,13 +279,21 @@ function BoardColumn({
       role="listitem"
       aria-label={`${label}, ${count} ${count === 1 ? "task" : "tasks"}`}
       className={cn(
-        "flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3 transition-colors",
+        "flex w-[280px] shrink-0 snap-start flex-col gap-2.5 rounded-xl transition-colors md:w-auto md:min-w-[230px] md:flex-1",
         isOver && "bg-muted",
       )}
     >
-      <h3 className="flex items-center gap-2 px-1 text-sm font-medium">
+      <h3
+        className={cn(
+          "flex items-center gap-2 rounded-[10px] border border-[#ececea] bg-card px-3 py-[9px] text-[13px] font-semibold",
+          COLUMN_TOP_LINE[status],
+        )}
+      >
+        <StatusDot status={status} />
         {label}
-        <span className="text-muted-foreground">{count}</span>
+        <span className="rounded-full bg-accent px-1.5 font-mono text-[10.5px] font-normal text-muted-foreground">
+          {count}
+        </span>
       </h3>
       {children}
     </section>

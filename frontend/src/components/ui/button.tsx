@@ -17,6 +17,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // AI actions are violet, like everything else the AI proposes.
+        ai: "bg-ai text-ai-foreground hover:bg-ai/90",
+        "ai-soft":
+          "border-ai-border bg-ai-soft text-ai hover:bg-ai-soft/70 aria-expanded:bg-ai-soft",
       },
       size: {
         default:

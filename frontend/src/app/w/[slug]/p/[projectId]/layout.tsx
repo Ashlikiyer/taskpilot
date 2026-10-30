@@ -75,9 +75,12 @@ export default function ProjectLayout({
   ];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <ProjectHeader workspace={workspace} project={project.data} />
-      <nav aria-label="Project views" className="flex gap-1 border-b">
+      <nav
+        aria-label="Project views"
+        className="flex w-fit gap-1 rounded-[9px] border bg-card p-[3px]"
+      >
         {tabs.map(({ href, label, icon: Icon, count }) => {
           const active = pathname === href;
           return (
@@ -86,17 +89,15 @@ export default function ProjectLayout({
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground",
-                active
-                  ? "border-primary font-medium text-foreground"
-                  : "border-transparent",
+                "flex items-center gap-1.5 rounded-md px-3 py-[5px] text-[12.5px] text-muted-foreground hover:text-foreground",
+                active && "bg-success-soft font-semibold text-success-ink",
               )}
             >
-              <Icon className="size-4" />
+              <Icon className="size-3.5" />
               {label}
               {count > 0 && (
-                <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-                  {count}
+                <span className="font-mono text-[11px]">
+                  · {count}
                   <span className="sr-only"> pending</span>
                 </span>
               )}

@@ -29,9 +29,9 @@ export function ThreadSummary({ taskId }: { taskId: string }) {
   if (!summary) {
     return (
       <Button
-        variant="outline"
+        variant="ai-soft"
         size="sm"
-        className="w-fit"
+        className="w-fit border"
         disabled={summarize.isPending}
         onClick={() =>
           summarize.mutate(undefined, {
@@ -53,35 +53,39 @@ export function ThreadSummary({ taskId }: { taskId: string }) {
   return (
     <section
       aria-labelledby={`summary-${taskId}`}
-      className="grid gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3"
+      className="grid gap-2.5 rounded-[10px] border border-ai-border px-3.5 py-3"
     >
       <h4
         id={`summary-${taskId}`}
-        className="flex items-center gap-1.5 text-sm font-medium"
+        className="flex items-center gap-2 text-[13px] font-semibold text-ai-ink"
       >
-        <SparklesIcon className="size-3.5 text-primary" aria-hidden />
+        <span aria-hidden className="text-ai">
+          ✦
+        </span>
         Thread summary
-        <span className="ml-auto text-xs font-normal text-muted-foreground">
+        <span className="ml-auto text-xs font-normal text-subtle">
           {timeAgo(summary.generated_at)}
         </span>
       </h4>
-      {SECTIONS.map(({ key, title }) => (
-        <div key={key} className="grid gap-1">
-          <h5 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {title}
-          </h5>
-          {summary[key].length === 0 ? (
-            <p className="text-sm text-muted-foreground">None</p>
-          ) : (
-            <ul className="list-disc pl-5 text-sm">
-              {summary[key].map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-      <p className="text-xs text-muted-foreground">
+      <div className="grid gap-3.5 sm:grid-cols-3">
+        {SECTIONS.map(({ key, title }) => (
+          <div key={key} className="grid content-start gap-1">
+            <h5 className="text-[11px] tracking-[0.04em] text-[#77777c] uppercase">
+              {title}
+            </h5>
+            {summary[key].length === 0 ? (
+              <p className="text-sm text-muted-foreground">None</p>
+            ) : (
+              <ul className="grid gap-1 text-[12.5px] leading-snug">
+                {summary[key].map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-[11.5px] text-ai-muted">
         Written by AI from the comments below. It refreshes after the thread
         changes.
       </p>

@@ -233,3 +233,18 @@ async def test_deleting_a_task_deletes_its_notifications(
     await client.delete(f"/api/v1/tasks/{task['id']}", headers=auth_headers(w.owner))
 
     assert await _inbox(client, w.nina) == []
+
+
+async def test_tasks_show_their_comment_count(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    w = await _world(db_session)
+    task = await _task(client, w)
+    await _comment(client, task, w.mark, "First")
+    await _comment(client, task, w.nina, "Second")
+
+    listing = await client.get(
+        f"/api/v1/projects/{w.project.id}/tasks", headers=auth_headers(w.owner)
+    )
+
+    assert [t["comment_count"] for t in listing.json()["items"]] == [2]
